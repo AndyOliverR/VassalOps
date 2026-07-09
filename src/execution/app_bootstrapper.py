@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import subprocess
 import time
@@ -90,3 +90,5 @@ if __name__ == "__main__":
     bootstrapper = GMAIAppBootstrapper()
     print("[GM AI] Running browser boot validation check...")
     bootstrapper.ensure_application_running("chrome")
+
+

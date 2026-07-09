@@ -67,3 +67,5 @@ if __name__ == "__main__":
     sorter = GMAIDataSorter()
     # Trigger a local run test to parse and sort our logged data files
     sorter.run_sort_and_optimize()
+
+

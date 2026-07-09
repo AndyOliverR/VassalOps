@@ -4,10 +4,10 @@ import os
 # Dynamically ensure top-level project module access
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from src.ingestion.job_trainer import GMAIJobTrainer
+from src.ingestion.job_trainer import VassalOpsJobTrainer
 
 def deploy_cimpress_training():
-    trainer = GMAIJobTrainer()
+    trainer = VassalOpsJobTrainer()
     
     role_title = "Senior Product Manager - Supplier Product Data"
     role_description = """
@@ -19,9 +19,11 @@ def deploy_cimpress_training():
     Tech Requirements: Strong technical fluency with data models, system constraints, platform tradeoffs, internal data enrichment pipelines, and SaaS commerce backends.
     """
     
-    print(f"[GM AI Core] Injecting platform cognitive parameters for '{role_title}'...")
+    print(f"[VassalOps Core] Injecting platform cognitive parameters for '{role_title}'...")
     profile_path = trainer.ingest_job_description(role_title, role_description)
-    print(f"[GM AI Core] Cimpress platform profile successfully compiled at: {profile_path}")
+    print(f"[VassalOps Core] Cimpress platform profile successfully compiled at: {profile_path}")
 
 if __name__ == "__main__":
     deploy_cimpress_training()
+
+

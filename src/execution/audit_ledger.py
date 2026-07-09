@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sqlite3
 import time
 
@@ -61,3 +61,5 @@ if __name__ == "__main__":
     print("[INIT] Testing Phase 15 Partitioned AuditLedger pipelines...")
     ledger = GMAIAuditLedger()
     ledger.commit_transaction(intent="verify channel isolation partitioning bounds", status="AUDITED", channel="device_alpha_node")
+
+

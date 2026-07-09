@@ -1,4 +1,4 @@
-﻿import os, sys, time, json, requests, pyautogui, keyboard, pyperclip
+import os, sys, time, json, requests, pyautogui, keyboard, pyperclip
 from typing import Dict, TypedDict, Optional, List
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -146,7 +146,7 @@ if __name__ == "__main__":
             print(f"\n[GRAPH STATE TRANSITION] Completed Node: {node_name}")
             if node_output: state.update(node_output)
     if state.get("proposed_actions"):
-        print("\n=========== 🛡️ GM AI BOT-SITTER SCREEN PREVIEW ===========")
+        print("\n=========== ??? GM AI BOT-SITTER SCREEN PREVIEW ===========")
         print(f"Captured OCR Context Preview: {state.get('captured_context', '')[:120]}...")
         print("\nProposed Automation Steps Blueprint:")
         for idx, step in enumerate(state["proposed_actions"], 1):
@@ -159,3 +159,5 @@ if __name__ == "__main__":
             execute_macros_node(state)
         else:
             print("[GM AI] Execution aborted by human bot-sitter. State preserved safely.")
+
+

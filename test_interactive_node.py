@@ -12,7 +12,7 @@ from telemetry.sensor import GMTelemetrySensor
 class GMAIGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("GM AI Subsystem Core Engine Workspace")
+        self.root.title("VassalOps Core Engine Workspace")
         self.root.geometry("800x650")
         self.root.configure(bg="#1e1e24")
         
@@ -25,7 +25,7 @@ class GMAIGUI:
     def create_widgets(self):
         title_label = tk.Label(
             self.root, 
-            text="GM AI Core Engine Workspace (Operator: Bot-Sitter)", 
+            text="VassalOps Core Engine Workspace (Operator: Bot-Sitter)", 
             font=("Arial", 14, "bold"), fg="#ffffff", bg="#1e1e24", pady=10
         )
         title_label.pack(fill=tk.X)
@@ -123,3 +123,5 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = GMAIGUI(root)
     root.mainloop()
+
+

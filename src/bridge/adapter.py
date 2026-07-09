@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import logging
 import json
 import websockets
@@ -111,3 +111,4 @@ if __name__ == "__main__":
         asyncio.run(adapter.start_server_async())
     except KeyboardInterrupt:
         print("\nServer stopped cleanly by user request.")
+

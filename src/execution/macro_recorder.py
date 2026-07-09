@@ -96,3 +96,5 @@ class GMAIMacroRecorder:
 if __name__ == "__main__":
     recorder = GMAIMacroRecorder()
     recorder.start_recording()
+
+

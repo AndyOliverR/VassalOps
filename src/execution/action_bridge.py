@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import json
 import time
@@ -103,3 +103,5 @@ if __name__ == "__main__":
     print("[GM AI] Running operator bridge initialization pass...")
     # Trigger a clean, safe hotkey pass to ensure all pywin32 bindings load correctly
     operator.execute_system_hotkey("ctrl+shift+esc")
+
+

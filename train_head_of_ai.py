@@ -4,10 +4,10 @@ import os
 # Dynamically ensure top-level project module access
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from src.ingestion.job_trainer import GMAIJobTrainer
+from src.ingestion.job_trainer import VassalOpsJobTrainer
 
 def deploy_head_of_ai_training():
-    trainer = GMAIJobTrainer()
+    trainer = VassalOpsJobTrainer()
     
     role_title = "Head of AI"
     role_description = """
@@ -20,9 +20,11 @@ def deploy_head_of_ai_training():
     Tech Landscape: Frontier and open models, embeddings, memory, agentic systems (tool use, orchestration, evals), fine-tuning, computer use, full-stack range, infra, reliability, and custom workflow engines.
     """
     
-    print(f"[GM AI Core] Injecting high-level cognitive blueprint text for '{role_title}'...")
+    print(f"[VassalOps Core] Injecting high-level cognitive blueprint text for '{role_title}'...")
     profile_path = trainer.ingest_job_description(role_title, role_description)
-    print(f"[GM AI Core] Role successfully compiled into local brain memory maps at: {profile_path}")
+    print(f"[VassalOps Core] Role successfully compiled into local brain memory maps at: {profile_path}")
 
 if __name__ == "__main__":
     deploy_head_of_ai_training()
+
+

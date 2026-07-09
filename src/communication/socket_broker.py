@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import asyncio
 import json
@@ -49,7 +49,7 @@ class GMANetworkBroker:
 
                         current_state = gm_engine.get_state(thread_config).values
 
-                        print(f"\n=========== 🛡️ WIRELESS CONFIRMATION: CHANNEL [{channel_id.upper()}] ===========")
+                        print(f"\n=========== ??? WIRELESS CONFIRMATION: CHANNEL [{channel_id.upper()}] ===========")
                         print(f"Origin Device: {device_source}")
                         print(f"Captured Text Context: '{current_state.get('captured_context', '')}'")
                         print("\nGenerated Remote Automation Steps Blueprint:")
@@ -102,3 +102,5 @@ class GMANetworkBroker:
 if __name__ == "__main__":
     broker = GMANetworkBroker()
     broker.start_server()
+
+

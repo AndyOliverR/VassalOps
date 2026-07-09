@@ -74,3 +74,5 @@ class GMAIMacroPlayer:
 if __name__ == "__main__":
     player = GMAIMacroPlayer()
     player.execute_replay()
+
+

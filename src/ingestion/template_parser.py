@@ -34,3 +34,5 @@ if __name__ == "__main__":
     print("[GM AI] Initializing Visual Template Parser target calculation test...")
     coordinates = engine.resolve_target_coordinates("Notepad", "notepad_edit_field")
     print(f"[GM AI] Parsed Visual Context Coordinates: {coordinates}")
+
+

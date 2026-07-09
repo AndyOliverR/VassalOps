@@ -55,3 +55,5 @@ if __name__ == "__main__":
     # Initialize a hyper-fast 60-second baseline tracking interval to run local checks
     scheduler = GMAIBackgroundScheduler(interval_seconds=60)
     scheduler.start_scheduler()
+
+

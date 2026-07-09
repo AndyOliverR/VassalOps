@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import time
 import threading
@@ -62,3 +62,5 @@ if __name__ == "__main__":
     time.sleep(5.0)
     daemon.stop()
     print("[INIT] Background test pass complete.")
+
+

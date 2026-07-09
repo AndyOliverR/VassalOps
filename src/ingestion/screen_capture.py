@@ -100,3 +100,5 @@ if __name__ == "__main__":
     # Run test frame 2 (with a static screen display)
     path2, drift2 = parser.capture_full_display()
     print(f"[LOOP 2 - Static Screen] Path: {path2} | New Drift Event Triggered: {drift2}")
+
+

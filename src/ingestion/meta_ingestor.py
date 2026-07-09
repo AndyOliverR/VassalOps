@@ -6,10 +6,10 @@ import time
 # Dynamically ensure top-level project module access
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from src.ingestion.job_trainer import GMAIJobTrainer
+from src.ingestion.job_trainer import VassalOpsJobTrainer
 
 def compile_meta_existential_context():
-    trainer = GMAIJobTrainer()
+    trainer = VassalOpsJobTrainer()
     
     role_title = "GM AI Core Orchestration Layer"
     # Ingraining our exact development context directly into the local model memory framework
@@ -27,3 +27,5 @@ def compile_meta_existential_context():
 
 if __name__ == "__main__":
     compile_meta_existential_context()
+
+

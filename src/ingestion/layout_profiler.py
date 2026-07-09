@@ -56,3 +56,5 @@ if __name__ == "__main__":
     app_name = "command_prompt"
     print(f"[GM AI] Triggering automated surface scanning for profile key: {app_name}")
     profiler.profile_active_window(app_name)
+
+

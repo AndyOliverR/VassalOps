@@ -6,7 +6,7 @@ import time
 # Dynamically ensure top-level project module access
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-class GMAIJobTrainer:
+class VassalOpsJobTrainer:
     def __init__(self, storage_dir: str = "storage/job_roles/"):
         self.storage_dir = storage_dir
         os.makedirs(self.storage_dir, exist_ok=True)
@@ -43,7 +43,7 @@ class GMAIJobTrainer:
         return profile_path
 
 if __name__ == "__main__":
-    trainer = GMAIJobTrainer()
+    trainer = VassalOpsJobTrainer()
     print("[GM AI] Running local job ingestion validation test...")
     
     # Sample Mock Job Description input for testing
@@ -52,3 +52,5 @@ if __name__ == "__main__":
     
     path = trainer.ingest_job_description(sample_title, sample_jd)
     print(f"[GM AI] Job profile successfully generated at: {path}")
+
+
