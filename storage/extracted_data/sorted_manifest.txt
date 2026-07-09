@@ -1,14 +1,15 @@
 ======================================================
-         GM AI OPTIMIZED DATA SORTED MANIFEST         
+         VassalOps OPTIMIZED DATA SORTED MANIFEST         
 ======================================================
 
  [SORTED URL REPOSITORY] (Total: 1)
   -> https://github.com
 
  [SORTED EMAIL CONTACTS] (Total: 1)
-  -> core_dev@gm.ai
+  -> core_dev@VassalOps
 
  [SORTED WORKSPACE PATHS] (Total: 1)
-  -> C:\gm.ai
+  -> C:\VassalOps
 
 ======================================================
+

@@ -6,7 +6,8 @@
     },
     "runtime_boundaries": {
         "max_input_characters": 4000,
-        "database_storage_path": "C:\\gm.ai\\storage\\gm_core.db",
+        "database_storage_path": "C:\\VassalOps\\storage\\gm_core.db",
         "rolling_history_limit": 6
     }
 }
+

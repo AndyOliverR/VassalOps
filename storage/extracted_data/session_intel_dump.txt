@@ -1,11 +1,12 @@
 
-=== GM AI INTEL SCANNED RECORD | 2026-06-19 17:16:54 | Session: sandbox_test ===
+=== VassalOps INTEL SCANNED RECORD | 2026-06-19 17:16:54 | Session: sandbox_test ===
  [URLS]
   -> https://github.com
  [EMAILS]
-  -> core_dev@gm.ai
+  -> core_dev@VassalOps
  [WINDOWS_PATHS]
-  -> C:\gm.ai
+  -> C:\VassalOps
  [NUMERICAL_LEDGERS]
   -> 2026.06
 ========================================================================
+

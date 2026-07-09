@@ -2,7 +2,7 @@ import json
 import os
 
 class GMSessionTracker:
-    def __init__(self, storage_dir=r"C:\gm.ai\storage", max_history=5):
+    def __init__(self, storage_dir=r"C:\VassalOps\storage", max_history=5):
         self.storage_dir = storage_dir
         self.max_history = max_history
         if not os.path.exists(storage_dir):
@@ -35,3 +35,4 @@ class GMSessionTracker:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(history, f, indent=4)
         return history
+

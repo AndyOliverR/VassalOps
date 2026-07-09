@@ -1,7 +1,7 @@
 import os
 
 class GMDocumentReader:
-    def __init__(self, doc_dir=r"C:\gm.ai\storage\documents"):
+    def __init__(self, doc_dir=r"C:\VassalOps\storage\documents"):
         self.doc_dir = doc_dir
         if not os.path.exists(doc_dir):
             os.makedirs(doc_dir)
@@ -30,3 +30,4 @@ class GMDocumentReader:
                 
         compiled_context += "=======================================\n"
         return compiled_context
+

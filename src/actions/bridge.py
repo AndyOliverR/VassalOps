@@ -10,7 +10,7 @@ class GMActionBridge:
             "taskmgr": "taskmgr.exe",
             "explorer": "explorer.exe"
         }
-        self.workspace_root = r"C:\gm.ai"
+        self.workspace_root = r"C:\VassalOps"
 
     def execute_app(self, app_key: str, argument: str = "") -> dict:
         """Securely launch an application, optionally piping parameters or arguments."""
@@ -91,3 +91,4 @@ class GMActionBridge:
             return {"status": "TERMINATED", "target_process": executable}
         except Exception as e:
             return {"status": "FAILED", "error": str(e)}
+

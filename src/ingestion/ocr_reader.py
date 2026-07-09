@@ -15,7 +15,7 @@ except ImportError:
 
 class GMAScreenOCRReader:
     def __init__(self):
-        print("[GM AI OCR] Initializing Pattern-Aware Visual Word Layer Engine...")
+        print("[VassalOps OCR] Initializing Pattern-Aware Visual Word Layer Engine...")
         self.tesseract_default_path = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
         if os.path.exists(self.tesseract_default_path):
             pytesseract.pytesseract.tesseract_cmd = self.tesseract_default_path
@@ -31,11 +31,11 @@ class GMAScreenOCRReader:
     def extract_text_from_matrix(self, image_path: str) -> str:
         """Parses a local PNG canvas snapshot and translates raw pixels into clear text strings."""
         if not os.path.exists(image_path):
-            print(f"[GM AI OCR] Error: Targeted context frame path missing: {image_path}")
+            print(f"[VassalOps OCR] Error: Targeted context frame path missing: {image_path}")
             return ""
 
         try:
-            print(f"[GM AI OCR] Scaffolding character layout for matrix frame: {os.path.basename(image_path)}")
+            print(f"[VassalOps OCR] Scaffolding character layout for matrix frame: {os.path.basename(image_path)}")
             img = Image.open(image_path)
             extracted_string = pytesseract.image_to_string(img)
             return extracted_string.strip()
@@ -45,7 +45,7 @@ class GMAScreenOCRReader:
             return (
                 "SYSTEM_FALLBACK: Active window text capture trace successfully simulated.\n"
                 "Registry Sync Log: Target deployment active at https://github.com\n"
-                "System notification delivered to core_dev@gm.ai from server workspace C:\\gm.ai"
+                "System notification delivered to core_dev@VassalOps from server workspace C:\\VassalOps"
             )
 
     def extract_structural_entities(self, raw_text: str) -> Dict[str, List[str]]:
@@ -61,7 +61,7 @@ class GMAScreenOCRReader:
 
 if __name__ == "__main__":
     reader = GMAScreenOCRReader()
-    print("[GM AI OCR] Running regex entity extraction validation check...")
+    print("[VassalOps OCR] Running regex entity extraction validation check...")
     
     # Generate mock environment string layout or load latest cache
     test_cache_dir = os.path.join("src", "ingestion", "cache")
@@ -73,7 +73,8 @@ if __name__ == "__main__":
 
     entities = reader.extract_structural_entities(raw_text)
     
-    print("\n--- [GM AI OCR REGEX SCANNED ENTITIES] ---")
+    print("\n--- [VassalOps OCR REGEX SCANNED ENTITIES] ---")
     for entity_type, matches in entities.items():
         print(f" -> {entity_type.upper()}: {matches}")
     print("------------------------------------------")
+

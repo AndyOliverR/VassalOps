@@ -1,6 +1,6 @@
 import unittest
 import sys
-sys.path.append(r'C:\gm.ai\src')
+sys.path.append(r'C:\VassalOps\src')
 from actions.bridge import GMActionBridge
 
 class TestGMActionBridge(unittest.TestCase):
@@ -20,3 +20,4 @@ class TestGMActionBridge(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

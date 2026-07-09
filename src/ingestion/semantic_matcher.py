@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 import re
 from typing import Dict, Any, Optional
@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger("GMSemanticMatcher")
 
 class GMSemanticMatcher:
-    def __init__(self, catalog_path: str = "C:\\gm.ai\\ai-catalog.json"):
+    def __init__(self, catalog_path: str = "C:\\VassalOps\\ai-catalog.json"):
         self.catalog_path = catalog_path
         self.capabilities = []
         self.load_catalog()
@@ -52,3 +52,4 @@ if __name__ == "__main__":
     # Test our new capability with broken phrasing
     test_run = matcher.extract_intent("hey run safe script test please")
     print(f"[TEST COMPLETED] Matched capability ID: {test_run['id'] if test_run else 'None'}")
+

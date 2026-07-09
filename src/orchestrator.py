@@ -18,9 +18,9 @@ class GMAIEngine:
         self.action_bridge = GMActionBridge()
         
         self.local_shortcuts = {
-            "open config": ("notepad", "C:\\gm.ai\\config.json"),
-            "open database": ("explorer", "C:\\gm.ai\\storage"),
-            "open engine logs": ("notepad", "C:\\gm.ai\\storage\\gm_core.db")
+            "open config": ("notepad", "C:\\VassalOps\\config.json"),
+            "open database": ("explorer", "C:\\VassalOps\\storage"),
+            "open engine logs": ("notepad", "C:\\VassalOps\\storage\\gm_core.db")
         }
 
     def process_message(self, session_id: str, raw_payload: str):
@@ -117,7 +117,7 @@ class GMAIEngine:
         context_string = ""
         for turn in history[:-1]:
             context_string += f"{turn['role'].upper()}: {turn['content']}\n"
-        context_string += f"BOT_SITTER: {user_prompt}\nGM_AI_ENGINE:"
+        context_string += f"BOT_SITTER: {user_prompt}\nVassalOps_ENGINE:"
 
         payload = {"model": self.model_name, "prompt": context_string.strip(), "stream": True}
         data = json.dumps(payload).encode('utf-8')
@@ -134,3 +134,4 @@ class GMAIEngine:
                             pass
         except Exception as e:
             yield f"\n[PIPELINE EXCEPTION] Failed to connect to server: {e}"
+

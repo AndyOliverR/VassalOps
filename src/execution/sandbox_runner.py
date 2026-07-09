@@ -1,4 +1,4 @@
-﻿import subprocess
+import subprocess
 import sys
 import os
 import logging
@@ -7,7 +7,7 @@ from typing import Dict, Any
 logger = logging.getLogger("GMSandboxRunner")
 
 class GMSandboxRunner:
-    def __init__(self, scratch_dir: str = "C:\\gm.ai\\scratchpad"):
+    def __init__(self, scratch_dir: str = "C:\\VassalOps\\scratchpad"):
         self.scratch_dir = scratch_dir
 
     def execute_script(self, filename: str, timeout_sec: float = 5.0) -> dict:
@@ -18,7 +18,7 @@ class GMSandboxRunner:
 
         # Enforce isolated environment pathing parameters
         custom_env = os.environ.copy()
-        custom_env["PYTHONPATH"] = f"{self.scratch_dir};C:\\gm.ai;C:\\gm.ai\\src"
+        custom_env["PYTHONPATH"] = f"{self.scratch_dir};C:\\VassalOps;C:\\VassalOps\\src"
 
         try:
             # Run target script in an isolated process block capturing system outputs
@@ -57,3 +57,4 @@ if __name__ == "__main__":
     print(f"\n--- SANDBOX RUNNER TEST RESULT ---")
     print(f"Status: {run_matrix['status']}")
     print(f"Captured Output: {run_matrix.get('stdout')}")
+

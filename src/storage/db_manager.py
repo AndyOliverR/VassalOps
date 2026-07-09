@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 class GMDatabaseManager:
-    def __init__(self, db_path=r"C:\gm.ai\storage\gm_core.db"):
+    def __init__(self, db_path=r"C:\VassalOps\storage\gm_core.db"):
         self.db_path = db_path
         # Ensure directory paths exist before initiating connections
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -73,3 +73,4 @@ class GMDatabaseManager:
             rows = cursor.fetchall()
             # Reverse order to restore historical progression sequence flow
             return [{"role": r[0], "content": r[1]} for r in reversed(rows)]
+

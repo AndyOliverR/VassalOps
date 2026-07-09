@@ -1,9 +1,9 @@
-﻿import os
+import os
 import fnmatch
 from typing import List, Set
 
 class WorkspaceContextAggregator:
-    def __init__(self, root_dir: str = "c:\\gm.ai"):
+    def __init__(self, root_dir: str = "c:\\VassalOps"):
         self.root_dir = os.path.abspath(root_dir)
         self.allowed_extensions: Set[str] = {'.py', '.json', '.html', '.txt', '.bat', '.sh'}
         self.ignored_dirs: Set[str] = {'.git', '__pycache__', 'cache', '.pytest_cache', 'venv', 'env'}
@@ -22,7 +22,7 @@ class WorkspaceContextAggregator:
                         if line and not line.startswith('#'):
                             rules.append(line)
             except Exception:
-                print("[GM AI Warning] Found .gitignore file but failed to read entry indices.")
+                print("[VassalOps Warning] Found .gitignore file but failed to read entry indices.")
         return rules
 
     def _is_ignored_by_gitignore(self, relative_path: str) -> bool:
@@ -36,7 +36,7 @@ class WorkspaceContextAggregator:
 
     def scan_workspace_text(self) -> str:
         aggregated_payload = []
-        print(f"[GM AI Brain] Recursively digesting code structures inside: {self.root_dir}")
+        print(f"[VassalOps Brain] Recursively digesting code structures inside: {self.root_dir}")
 
         for root, dirs, files in os.walk(self.root_dir):
             # Enforce core directory pruners
@@ -77,3 +77,4 @@ if __name__ == "__main__":
     
     print(f"[SUCCESS] Gitignore checks complete. Tracked {file_count} active text modules.")
     print(f"[METRICS] Filtered context snapshot size: {total_characters} characters.")
+

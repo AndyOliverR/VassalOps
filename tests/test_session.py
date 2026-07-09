@@ -2,12 +2,12 @@ import unittest
 import os
 import shutil
 import sys
-sys.path.append(r'C:\gm.ai\src')
+sys.path.append(r'C:\VassalOps\src')
 from tracking.session import GMSessionTracker
 
 class TestGMSessionTracker(unittest.TestCase):
     def setUp(self):
-        self.test_dir = r"C:\gm.ai\storage_test"
+        self.test_dir = r"C:\VassalOps\storage_test"
         self.tracker = GMSessionTracker(storage_dir=self.test_dir, max_history=2)
 
     def tearDown(self):
@@ -32,3 +32,4 @@ class TestGMSessionTracker(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

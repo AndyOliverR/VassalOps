@@ -1,6 +1,6 @@
 import unittest
 import sys
-sys.path.append(r'C:\gm.ai\src')
+sys.path.append(r'C:\VassalOps\src')
 from ingestion.parser import GMInputParser
 
 class TestGMInputParser(unittest.TestCase):
@@ -27,3 +27,4 @@ class TestGMInputParser(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

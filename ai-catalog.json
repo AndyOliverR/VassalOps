@@ -1,8 +1,8 @@
-﻿{
+{
     "$schema": "https://agntcy.org",
     "provider": {
-        "name": "gm.ai Core Engine",
-        "domain": "local.gm.ai"
+        "name": "VassalOps Core Engine",
+        "domain": "local.VassalOps"
     },
     "capabilities": [
         {
@@ -34,3 +34,4 @@
         }
     ]
 }
+

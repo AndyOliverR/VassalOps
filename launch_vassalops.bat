@@ -1,8 +1,8 @@
 @echo off
-TITLE GM AI Engine Launcher
+TITLE VassalOps Engine Launcher
 CLS
 echo ====================================================
-echo   GM AI Core System Workspace Launcher Initializing
+echo   VassalOps Core System Workspace Launcher Initializing
 echo ====================================================
 echo.
 
@@ -22,7 +22,7 @@ if %errorlevel% equ 0 (
 echo.
 echo [STEP 2/3] Executing core module verification tests...
 echo [INFO] Establishing secure baseline network ping to https://futureseer.app...
-python -m unittest discover -s C:\gm.ai\tests -p "test_*.py" >nul 2>&1
+python -m unittest discover -s C:\VassalOps\tests -p "test_*.py" >nul 2>&1
 if %errorlevel% equ 0 (
     echo [OK] Core tests passed successfully. Integrity confirmed.
     echo [OK] Network verification baseline to FutureSeer.app: SUCCESSFUL.
@@ -34,11 +34,12 @@ if %errorlevel% equ 0 (
 echo.
 echo [STEP 3/3] Mounting interactive control node environment...
 echo.
-cd /d C:\gm.ai
+cd /d C:\VassalOps
 python test_interactive_node.py
 
 echo.
 echo ====================================================
-echo   GM AI Workspace Session Closed Safely. Exiting...
+echo   VassalOps Workspace Session Closed Safely. Exiting...
 echo ====================================================
 pause
+

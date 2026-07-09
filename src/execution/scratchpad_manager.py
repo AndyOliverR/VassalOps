@@ -1,4 +1,4 @@
-﻿import os
+import os
 import shutil
 import logging
 from typing import Dict, Any
@@ -6,7 +6,7 @@ from typing import Dict, Any
 logger = logging.getLogger("GMScratchpadManager")
 
 class GMScratchpadManager:
-    def __init__(self, scratch_dir: str = "C:\\gm.ai\\scratchpad"):
+    def __init__(self, scratch_dir: str = "C:\\VassalOps\\scratchpad"):
         self.scratch_dir = scratch_dir
         self.ensure_scratchpad_exists()
 
@@ -37,3 +37,4 @@ if __name__ == "__main__":
     manager.clean_scratchpad()
     path = manager.stage_experimental_script("test_autonomy.py", "print('Autonomous Code Run Successful')")
     print(f"[SCRATCHPAD VERIFIED] Temporary module safely isolated at: {path}")
+
