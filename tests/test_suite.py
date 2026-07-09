@@ -2,7 +2,7 @@ import unittest
 import urllib.request
 import json
 
-class TestGMAIPipeline(unittest.TestCase):
+class TestVassalOpsPipeline(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = "127.0.0.1"
