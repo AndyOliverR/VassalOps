@@ -69,12 +69,8 @@ def parse_intent_node(state: GMState) -> Dict:
     except Exception as e:
         print(f"[GM AI Diagnostic Error] JSON validation trace hit a processing hurdle: {e}")
     if not structured_steps:
-        user_lower = state['raw_user_input'].lower()
-        if "backup" in user_lower or "archive" in user_lower or "compress" in user_lower: steps = [{"type": "run_backup", "payload": "trigger_folder_archival"}]
-        elif "sort" in user_lower or "optimize" in user_lower or "clean" in user_lower: steps = [{"type": "sort_intel", "payload": "run_manifest_optimization"}]
-        elif "save" in user_lower or "extract" in user_lower: steps = [{"type": "extract_intel", "payload": "commit_active_variables"}]
-        else: steps = [{"type": "click_element", "payload": "notepad.edit_field"}, {"type": "type_text", "payload": "echo Core Orchestration Stable!"}]
-        structured_steps = {"steps": steps}
+        steps = [{"type": "type_text", "payload": "echo Hello! How can I help you automate your PC today?"}]
+        structured_steps = {'steps': steps}
     return {"normalized_intent": structured_steps, "proposed_actions": structured_steps.get("steps", []), "approval_status": "pending"}
 def safety_gate_condition(state: GMState) -> str:
     return "execute_macros" if state.get("approval_status") == "approved" else END
@@ -159,5 +155,8 @@ if __name__ == "__main__":
             execute_macros_node(state)
         else:
             print("[GM AI] Execution aborted by human bot-sitter. State preserved safely.")
+
+
+
 
 
