@@ -1,8 +1,8 @@
-import os
+﻿import os
 import sqlite3
 import time
 
-class GMAIAuditLedger:
+class VassalOpsAuditLedger:
     def __init__(self, db_path: str = "gm_memory.db"):
         self.db_path = db_path
         self._initialize_audit_table()
@@ -29,13 +29,13 @@ class GMAIAuditLedger:
             cursor.execute("PRAGMA table_info(system_action_audit)")
             columns = [col[1] for col in cursor.fetchall()]
             if "channel_id" not in columns:
-                print("[GM AI Ledger] Schema migration engaged: Appending structural channel_id matrix tracking field...")
+                print("[VassalOps Ledger] Schema migration engaged: Appending structural channel_id matrix tracking field...")
                 cursor.execute("ALTER TABLE system_action_audit ADD COLUMN channel_id TEXT NOT NULL DEFAULT 'default_channel'")
                 
             conn.commit()
             conn.close()
         except Exception as e:
-            print(f"[GM AI Ledger Error] Failed to initialize table structures: {e}")
+            print(f"[VassalOps Ledger Error] Failed to initialize table structures: {e}")
 
     def commit_transaction(self, intent: str, status: str = "success_completed", device: str = "local_desktop", channel: str = "main_session"):
         """Commits a high-frequency automation transaction row bound directly to a user partition channel."""
@@ -51,16 +51,17 @@ class GMAIAuditLedger:
             
             conn.commit()
             conn.close()
-            print(f"[GM AI Ledger] Committed transaction line on channel '{channel}' for intent: '{intent}'")
+            print(f"[VassalOps Ledger] Committed transaction line on channel '{channel}' for intent: '{intent}'")
             return True
         except Exception as e:
-            print(f"[GM AI Ledger Error] Failed to write historical row artifact: {e}")
+            print(f"[VassalOps Ledger Error] Failed to write historical row artifact: {e}")
             return False
 
 if __name__ == "__main__":
     print("[INIT] Testing Phase 15 Partitioned AuditLedger pipelines...")
-    ledger = GMAIAuditLedger()
+    ledger = VassalOpsAuditLedger()
     ledger.commit_transaction(intent="verify channel isolation partitioning bounds", status="AUDITED", channel="device_alpha_node")
+
 
 
 

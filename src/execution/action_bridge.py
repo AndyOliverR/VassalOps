@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import json
 import time
@@ -36,7 +36,7 @@ class SystemOperatorBridge:
         retry_delay = 0.5
         bounds = None
 
-        print(f"[GM AI Bridge] Target lock engaged for '{app_key}.{element_key}'. Verifying window stability...")
+        print(f"[VassalOps Bridge] Target lock engaged for '{app_key}.{element_key}'. Verifying window stability...")
 
         for attempt in range(1, max_retries + 1):
             hwnd = win32gui.GetForegroundWindow()
@@ -45,15 +45,15 @@ class SystemOperatorBridge:
             # Check if the desired application moniker is active in the foreground string hook
             if app_key.lower() in title or (app_key.lower() == "notepad" and "notepad" in title):
                 bounds = self.capturer.extract_window_bounds()
-                print(f"[GM AI Bridge] Target window '{app_key}' verified stable on attempt {attempt}.")
+                print(f"[VassalOps Bridge] Target window '{app_key}' verified stable on attempt {attempt}.")
                 break
                 
-            print(f"[GM AI Warning] Window stability delay: Current foreground context '{title}' does not match '{app_key}'. Retrying...")
+            print(f"[VassalOps Warning] Window stability delay: Current foreground context '{title}' does not match '{app_key}'. Retrying...")
             time.sleep(retry_delay)
 
         # Fallback to current focus if the target application fails to mount within the safety threshold
         if bounds is None:
-            print(f"[GM AI Recovery] Window wait timeout breached for '{app_key}'. Falling back to current bounding matrix.")
+            print(f"[VassalOps Recovery] Window wait timeout breached for '{app_key}'. Falling back to current bounding matrix.")
             bounds = self.capturer.extract_window_bounds()
 
         left, top, right, bottom = bounds
@@ -61,7 +61,7 @@ class SystemOperatorBridge:
         win_h = bottom - top
 
         screen_width, screen_height = pyautogui.size()
-        print(f"[GM AI Scaler] Live hardware display matrix: {screen_width}x{screen_height}")
+        print(f"[VassalOps Scaler] Live hardware display matrix: {screen_width}x{screen_height}")
 
         if app_key in self.layouts and element_key in self.layouts[app_key]:
             rel = self.layouts[app_key][element_key]
@@ -72,37 +72,38 @@ class SystemOperatorBridge:
             target_x = max(0, min(target_x, screen_width - 1))
             target_y = max(0, min(target_y, screen_height - 1))
 
-            print(f"[GM AI Operator] Dynamic target scaled safely to point: ({target_x}, {target_y})")
+            print(f"[VassalOps Operator] Dynamic target scaled safely to point: ({target_x}, {target_y})")
             pyautogui.moveTo(target_x, target_y, duration=0.5)
             pyautogui.click()
-            print("[GM AI Operator] Cross-display scaled action deployed.")
+            print("[VassalOps Operator] Cross-display scaled action deployed.")
             return True
 
-        print(f"[GM AI Operator] Target mapping mismatch: {app_key}.{element_key}")
+        print(f"[VassalOps Operator] Target mapping mismatch: {app_key}.{element_key}")
         return False
 
     def execute_text_input(self, text: str, press_enter: bool = True):
-        print(f"[GM AI Operator] Emulating text entry sequencing: '{text}'")
+        print(f"[VassalOps Operator] Emulating text entry sequencing: '{text}'")
         pyautogui.write(text, interval=0.05)
         if press_enter:
             pyautogui.press('enter')
 
     def execute_system_hotkey(self, hotkey_combination: str) -> bool:
-        print(f"[GM AI Operator] Dispatched system key combo sequence: [{hotkey_combination}]")
+        print(f"[VassalOps Operator] Dispatched system key combo sequence: [{hotkey_combination}]")
         keys = [k.strip().lower() for k in hotkey_combination.split("+")]
         try:
             pyautogui.hotkey(*keys)
             time.sleep(0.5)
             return True
         except Exception as e:
-            print(f"[GM AI Operator Error] Hotkey macro injection mismatch: {e}")
+            print(f"[VassalOps Operator Error] Hotkey macro injection mismatch: {e}")
             return False
 
 if __name__ == "__main__":
     operator = SystemOperatorBridge()
-    print("[GM AI] Running operator bridge initialization pass...")
+    print("[VassalOps] Running operator bridge initialization pass...")
     # Trigger a clean, safe hotkey pass to ensure all pywin32 bindings load correctly
     operator.execute_system_hotkey("ctrl+shift+esc")
+
 
 
 

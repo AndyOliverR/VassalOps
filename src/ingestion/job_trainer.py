@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import json
 import time
@@ -10,7 +10,7 @@ class VassalOpsJobTrainer:
     def __init__(self, storage_dir: str = "storage/job_roles/"):
         self.storage_dir = storage_dir
         os.makedirs(self.storage_dir, exist_ok=True)
-        print("[GM AI Trainer] Job Role Cognitive Training Layer initialized.")
+        print("[VassalOps Trainer] Job Role Cognitive Training Layer initialized.")
 
     def ingest_job_description(self, role_name: str, raw_jd_text: str) -> str:
         """Parses raw job descriptions and extracts structured actionable skills for the AI."""
@@ -39,19 +39,20 @@ class VassalOpsJobTrainer:
         with open(profile_path, "w", encoding="utf-8") as f:
             json.dump(role_profile, f, indent=2)
             
-        print(f"[GM AI Trainer] Successfully compiled cognitive role map for: {role_name}")
+        print(f"[VassalOps Trainer] Successfully compiled cognitive role map for: {role_name}")
         return profile_path
 
 if __name__ == "__main__":
     trainer = VassalOpsJobTrainer()
-    print("[GM AI] Running local job ingestion validation test...")
+    print("[VassalOps] Running local job ingestion validation test...")
     
     # Sample Mock Job Description input for testing
     sample_title = "Data Entry Assistant"
     sample_jd = "Looking for an assistant to open Chrome, navigate web listings, and type text data logs into Notepad."
     
     path = trainer.ingest_job_description(sample_title, sample_jd)
-    print(f"[GM AI] Job profile successfully generated at: {path}")
+    print(f"[VassalOps] Job profile successfully generated at: {path}")
+
 
 
 

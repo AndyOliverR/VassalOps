@@ -11,16 +11,16 @@ try:
 except ImportError:
     raise ImportError("Dependencies missing. Please run: pip install pynput")
 
-class GMAIMacroRecorder:
+class VassalOpsMacroRecorder:
     def __init__(self, output_filename: str = "recorded_macro.json"):
         self.output_path = os.path.join("storage", output_filename)
         os.makedirs("storage", exist_ok=True)
         self.macro_steps = []
         self.start_time = time.time()
-        
+
         self.mouse_listener = None
         self.keyboard_listener = None
-        print(f"[GM AI Recorder] Macro pipeline tracking targets bound to: {self.output_path}")
+        print(f"[VassalOps Recorder] Macro pipeline tracking targets bound to: {self.output_path}")
 
     def _get_elapsed_time(self) -> float:
         return round(time.time() - self.start_time, 2)
@@ -49,7 +49,7 @@ class GMAIMacroRecorder:
 
         # End recording condition: pressing the escape key triggers the teardown sequence
         if key == keyboard.Key.esc:
-            print("\n[GM AI Recorder] Escape token captured. Suspending listeners...")
+            print("\n[VassalOps Recorder] Escape token captured. Suspending listeners...")
             return False
 
         step = {
@@ -63,12 +63,12 @@ class GMAIMacroRecorder:
     def start_recording(self):
         """Spins up background input capture loops concurrently."""
         print("======================================================")
-        print(" GM AI Macro Recorder Active — Session Started")
+        print(" VassalOps Macro Recorder Active — Session Started")
         print("======================================================")
         print("[!] NOTICE: All inputs are now actively monitored.")
         print("[!] To stop recording, tap the ESC key on your keyboard.")
         print("======================================================\n")
-        
+
         self.start_time = time.time()
 
         # Mount non-blocking mouse and keyboard listener loops
@@ -89,13 +89,10 @@ class GMAIMacroRecorder:
         try:
             with open(self.output_path, "w") as f:
                 json.dump({"steps": self.macro_steps}, f, indent=2)
-            print(f"\n[GM AI Recorder] Macro sequence file successfully written to disk: {self.output_path}")
+            print(f"\n[VassalOps Recorder] Macro sequence file successfully written to disk: {self.output_path}")
         except Exception as e:
-            print(f"[GM AI Recorder Error] Failed to export session sequence: {e}")
+            print(f"[VassalOps Recorder Error] Failed to export session sequence: {e}")
 
 if __name__ == "__main__":
-    recorder = GMAIMacroRecorder()
+    recorder = VassalOpsMacroRecorder()
     recorder.start_recording()
-
-
-

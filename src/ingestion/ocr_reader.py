@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import time
 import re
@@ -13,7 +13,7 @@ try:
 except ImportError:
     raise ImportError("Dependencies missing. Please run: pip install pillow pytesseract")
 
-class GMAScreenOCRReader:
+class VassalOpsScreenOCRReader:
     def __init__(self):
         print("[VassalOps OCR] Initializing Pattern-Aware Visual Word Layer Engine...")
         self.tesseract_default_path = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
@@ -60,7 +60,7 @@ class GMAScreenOCRReader:
         return extracted_entities
 
 if __name__ == "__main__":
-    reader = GMAScreenOCRReader()
+    reader = VassalOpsScreenOCRReader()
     print("[VassalOps OCR] Running regex entity extraction validation check...")
     
     # Generate mock environment string layout or load latest cache
@@ -77,5 +77,6 @@ if __name__ == "__main__":
     for entity_type, matches in entities.items():
         print(f" -> {entity_type.upper()}: {matches}")
     print("------------------------------------------")
+
 
 

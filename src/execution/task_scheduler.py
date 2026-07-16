@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import asyncio
 import time
@@ -7,22 +7,22 @@ import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from src.ingestion.screen_capture import ScreenContextLayer
-from src.ingestion.ocr_reader import GMAScreenOCRReader
+from src.ingestion.ocr_reader import VassalOpsScreenOCRReader
 from src.execution.audit_ledger import GMANetworkAuditLedger
 
-class GMAIBackgroundScheduler:
+class VassalOpsBackgroundScheduler:
     def __init__(self, interval_seconds: int = 10):
         self.interval = interval_seconds
         self.screen_layer = ScreenContextLayer()
-        self.ocr_engine = GMAScreenOCRReader()
+        self.ocr_engine = VassalOpsScreenOCRReader()
         self.ledger = GMANetworkAuditLedger()
         self.is_running = False
-        print(f"[GM AI Scheduler] Background automation loop initialized at {self.interval}s intervals.")
+        print(f"[VassalOps Scheduler] Background automation loop initialized at {self.interval}s intervals.")
 
     async def monitor_loop(self):
         """Asynchronous worker that logs background context audits continuously without breaking main user execution."""
         self.is_running = True
-        print("[GM AI Scheduler] Continuous telemetry scan thread active. Monitoring system canvas...")
+        print("[VassalOps Scheduler] Continuous telemetry scan thread active. Monitoring system canvas...")
         
         try:
             while self.is_running:
@@ -40,21 +40,22 @@ class GMAIBackgroundScheduler:
                 # 4. Suspend execution cleanly for the interval duration
                 await asyncio.sleep(self.interval)
         except asyncio.CancelledError:
-            print("[GM AI Scheduler] Telemetry loop suspended safely.")
+            print("[VassalOps Scheduler] Telemetry loop suspended safely.")
         except Exception as e:
-            print(f"[GM AI Scheduler Error] Telemetry baseline loop failure: {e}")
+            print(f"[VassalOps Scheduler Error] Telemetry baseline loop failure: {e}")
 
     def start_scheduler(self):
         """Launches the asynchronous state loop wrapper."""
         try:
             asyncio.run(self.monitor_loop())
         except KeyboardInterrupt:
-            print("\n[GM AI Scheduler] Shutting down background timers cleanly.")
+            print("\n[VassalOps Scheduler] Shutting down background timers cleanly.")
 
 if __name__ == "__main__":
     # Initialize a hyper-fast 60-second baseline tracking interval to run local checks
-    scheduler = GMAIBackgroundScheduler(interval_seconds=60)
+    scheduler = VassalOpsBackgroundScheduler(interval_seconds=60)
     scheduler.start_scheduler()
+
 
 
 

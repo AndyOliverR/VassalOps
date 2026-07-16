@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import time
 import ctypes
@@ -17,7 +17,7 @@ except Exception:
     try:
         ctypes.windll.user32.SetProcessDPIAware() # Classic Windows fallback hook
     except Exception:
-        print("[GM AI Scaling Warning] Failed to initialize hardware DPI awareness loops.")
+        print("[VassalOps Scaling Warning] Failed to initialize hardware DPI awareness loops.")
 
 try:
     from PIL import ImageGrab
@@ -70,7 +70,7 @@ class ScreenContextLayer:
                     if os.path.getmtime(file_path) < (now - max_age_seconds):
                         os.remove(file_path)
         except Exception as e:
-            print(f"[GM AI Cache Warning] Failed to clean workspace artifacts: {e}")
+            print(f"[VassalOps Cache Warning] Failed to clean workspace artifacts: {e}")
 
     def extract_window_bounds(self, target_title: str = "ActiveWindow") -> Tuple[int, int, int, int]:
         """Dynamically grabs the precise screen bounds of whichever window is currently in focus."""
@@ -80,15 +80,15 @@ class ScreenContextLayer:
             title = win32gui.GetWindowText(hwnd)
             left, top, right, bottom = win32gui.GetWindowRect(hwnd)
             if left >= -10000 and top >= -10000:
-                print(f"[GM AI] Intercepted Focused Window: '{title}'")
+                print(f"[VassalOps] Intercepted Focused Window: '{title}'")
                 return (left, top, right, bottom)
 
-        print("[GM AI] Warning: No active focused window tracked. Using sandbox bounds.")
+        print("[VassalOps] Warning: No active focused window tracked. Using sandbox bounds.")
         return (100, 100, 900, 700)
 
 if __name__ == "__main__":
     parser = ScreenContextLayer()
-    print("[GM AI] Running Integrated Screen Capture + Tracker validation test...")
+    print("[VassalOps] Running Integrated Screen Capture + Tracker validation test...")
     
     # Run test frame 1
     path1, drift1 = parser.capture_full_display()
@@ -100,6 +100,7 @@ if __name__ == "__main__":
     # Run test frame 2 (with a static screen display)
     path2, drift2 = parser.capture_full_display()
     print(f"[LOOP 2 - Static Screen] Path: {path2} | New Drift Event Triggered: {drift2}")
+
 
 
 

@@ -1,10 +1,10 @@
-import sys
+﻿import sys
 import os
 import subprocess
 import time
 from typing import Optional
 
-class GMAIAppBootstrapper:
+class VassalOpsAppBootstrapper:
     def __init__(self):
         self.app_registry = {
             "notepad": r"C:\Windows\System32\notepad.exe",
@@ -13,7 +13,7 @@ class GMAIAppBootstrapper:
             "chrome": r"C:\Program Files\Google\Chrome\Application\chrome.exe",
             "chrome_x86": r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
         }
-        print("[GM AI Bootstrapper] Web and process registry initialized.")
+        print("[VassalOps Bootstrapper] Web and process registry initialized.")
 
     def _locate_binary_globally(self, binary_name: str) -> Optional[str]:
         search_roots = [
@@ -24,7 +24,7 @@ class GMAIAppBootstrapper:
         ]
         search_roots = [r for r in search_roots if r]
         filename = f"{binary_name}.exe"
-        print(f"[GM AI Bootstrapper] Self-Healing engaged: Searching Windows paths for '{filename}'...")
+        print(f"[VassalOps Bootstrapper] Self-Healing engaged: Searching Windows paths for '{filename}'...")
         
         for root in search_roots:
             if not os.path.exists(root):
@@ -44,7 +44,7 @@ class GMAIAppBootstrapper:
         try:
             tasklist_check = subprocess.check_output(f'tasklist /FI "IMAGENAME eq {search_process}.exe"', shell=True).decode('utf-8', errors='ignore')
             if f"{search_process}.exe" in tasklist_check.lower():
-                print(f"[GM AI Bootstrapper] Active process detected for '{search_process}'. No boot required.")
+                print(f"[VassalOps Bootstrapper] Active process detected for '{search_process}'. No boot required.")
                 return True
         except Exception:
             pass
@@ -60,7 +60,7 @@ class GMAIAppBootstrapper:
             exe_path = self._locate_binary_globally(app_key)
 
         if exe_path and os.path.exists(exe_path):
-            print(f"[GM AI Bootstrapper] Spawning executable target path: {exe_path}")
+            print(f"[VassalOps Bootstrapper] Spawning executable target path: {exe_path}")
             
             try:
                 # Spawn target process and capture the internal process hook reference
@@ -72,24 +72,25 @@ class GMAIAppBootstrapper:
                 
                 # If poll returns a returncode value instead of remaining None, an early crash happened
                 if poll_status is not None and poll_status != 0:
-                    print(f"[GM AI Diagnostic Alert] Spelled process '{app_key}' crashed on boot. ReturnCode: {poll_status}")
+                    print(f"[VassalOps Diagnostic Alert] Spelled process '{app_key}' crashed on boot. ReturnCode: {poll_status}")
                     return False
                     
-                print(f"[GM AI Bootstrapper] Subprocess initialization verified healthy. PID tracked: {proc.pid}")
+                print(f"[VassalOps Bootstrapper] Subprocess initialization verified healthy. PID tracked: {proc.pid}")
                 time.sleep(1.5 if "chrome" in app_key else 1.0)
                 return True
                 
             except Exception as e:
-                print(f"[GM AI Diagnostic Error] Critical OS failure spawning subprocess thread: {e}")
+                print(f"[VassalOps Diagnostic Error] Critical OS failure spawning subprocess thread: {e}")
                 return False
 
-        print(f"[GM AI Bootstrapper] Error: Failed to resolve stable target path for '{app_key}'.")
+        print(f"[VassalOps Bootstrapper] Error: Failed to resolve stable target path for '{app_key}'.")
         return False
 
 if __name__ == "__main__":
-    bootstrapper = GMAIAppBootstrapper()
-    print("[GM AI] Running browser boot validation check...")
+    bootstrapper = VassalOpsAppBootstrapper()
+    print("[VassalOps] Running browser boot validation check...")
     bootstrapper.ensure_application_running("chrome")
+
 
 
 

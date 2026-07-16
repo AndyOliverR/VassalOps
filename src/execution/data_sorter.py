@@ -1,20 +1,20 @@
-import sys
+﻿import sys
 import os
 import re
 
-class GMAIDataSorter:
+class VassalOpsDataSorter:
     def __init__(self, target_file: str = "storage/extracted_data/session_intel_dump.txt"):
         self.target_file = target_file
         self.output_file = "storage/extracted_data/sorted_manifest.txt"
-        print("[GM AI Sorter] Algorithmic Sorting Suite Engine initialized.")
+        print("[VassalOps Sorter] Algorithmic Sorting Suite Engine initialized.")
 
     def run_sort_and_optimize(self) -> bool:
         """Reads raw logs, tokenizes components, filters out garbage noise, and saves sorted arrays."""
         if not os.path.exists(self.target_file):
-            print(f"[GM AI Sorter] Error: Source target data log missing at {self.target_file}")
+            print(f"[VassalOps Sorter] Error: Source target data log missing at {self.target_file}")
             return False
 
-        print(f"[GM AI Sorter] Reading metadata lines from log stream...")
+        print(f"[VassalOps Sorter] Reading metadata lines from log stream...")
         with open(self.target_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
@@ -42,7 +42,7 @@ class GMAIDataSorter:
 
         manifest_buffer = (
             "======================================================\n"
-            "         GM AI OPTIMIZED DATA SORTED MANIFEST         \n"
+            "         VassalOps OPTIMIZED DATA SORTED MANIFEST         \n"
             "======================================================\n\n"
             f" [SORTED URL REPOSITORY] (Total: {len(urls)})\n"
         )
@@ -59,14 +59,15 @@ class GMAIDataSorter:
         with open(self.output_file, "w", encoding="utf-8") as f:
             f.write(manifest_buffer)
 
-        print("[GM AI Sorter] Local extraction variables successfully optimized and sorted.")
-        print(f"[GM AI Sorter] Output manifest successfully written to: {self.output_file}")
+        print("[VassalOps Sorter] Local extraction variables successfully optimized and sorted.")
+        print(f"[VassalOps Sorter] Output manifest successfully written to: {self.output_file}")
         return True
 
 if __name__ == "__main__":
-    sorter = GMAIDataSorter()
+    sorter = VassalOpsDataSorter()
     # Trigger a local run test to parse and sort our logged data files
     sorter.run_sort_and_optimize()
+
 
 
 

@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import sqlite3
 import time
@@ -11,7 +11,7 @@ try:
 except ImportError:
     raise ImportError("Dependency missing. Please run: pip install pyttsx3")
 
-class GMAIVoiceAuditor:
+class VassalOpsVoiceAuditor:
     def __init__(self, db_path: str = "gm_memory.db"):
         self.db_path = db_path
         # Initialize text-to-speech engine canvas
@@ -41,7 +41,7 @@ class GMAIVoiceAuditor:
 
         if not rows:
             narrative = "GM A.I. ledger timeline is currently empty. No automated actions have been recorded yet."
-            print(f"[GM AI Audio] Narrating: {narrative}")
+            print(f"[VassalOps Audio] Narrating: {narrative}")
             self._announce(narrative)
             return
 
@@ -54,7 +54,7 @@ class GMAIVoiceAuditor:
             status = row[3].replace('_', ' ')
             narrative += f"Transaction record number {idx}. Dispatched via device, {device}. Action command intent requested was, {intent}. Resulting status was, {status}. "
 
-        print(f"[GM AI Audio] Narrating: {narrative}")
+        print(f"[VassalOps Audio] Narrating: {narrative}")
         self._announce(narrative)
 
     def _announce(self, text: str):
@@ -62,9 +62,10 @@ class GMAIVoiceAuditor:
         self.speech_engine.runAndWait()
 
 if __name__ == "__main__":
-    auditor = GMAIVoiceAuditor()
-    print("[GM AI] Initializing Voice Auditing Node test matrix tracker...")
+    auditor = VassalOpsVoiceAuditor()
+    print("[VassalOps] Initializing Voice Auditing Node test matrix tracker...")
     auditor.speak_timeline_summary()
+
 
 
 

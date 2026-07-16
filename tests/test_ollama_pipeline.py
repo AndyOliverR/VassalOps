@@ -1,4 +1,4 @@
-import urllib.request
+﻿import urllib.request
 import json
 
 def test_ollama_stream(model_name="gpt-oss:120b-cloud"):
@@ -9,7 +9,7 @@ def test_ollama_stream(model_name="gpt-oss:120b-cloud"):
     
     payload = {
         "model": model_name,
-        "prompt": "Integrate GM AI Bot-Sitter pipeline initialized. Confirm system status.",
+        "prompt": "Integrate VassalOps Bot-Sitter pipeline initialized. Confirm system status.",
         "stream": True
     }
     
@@ -41,6 +41,7 @@ def test_ollama_stream(model_name="gpt-oss:120b-cloud"):
 
 if __name__ == "__main__":
     test_ollama_stream()
+
 
 
 

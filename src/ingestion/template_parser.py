@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 # Dynamically add the project root directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
@@ -31,9 +31,10 @@ class VisualTemplateParser:
 
 if __name__ == "__main__":
     engine = VisualTemplateParser()
-    print("[GM AI] Initializing Visual Template Parser target calculation test...")
+    print("[VassalOps] Initializing Visual Template Parser target calculation test...")
     coordinates = engine.resolve_target_coordinates("Notepad", "notepad_edit_field")
-    print(f"[GM AI] Parsed Visual Context Coordinates: {coordinates}")
+    print(f"[VassalOps] Parsed Visual Context Coordinates: {coordinates}")
+
 
 
 

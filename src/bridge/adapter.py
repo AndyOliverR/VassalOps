@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import logging
 import json
 import websockets
@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 from src.communication.socket_broker import GMANetworkBroker  # Phase 14-16
 from src.ingestion.context_aggregator import WorkspaceContextAggregator  # Track B
-from src.orchestrator import GMAIEngine  # Phase 20
+from src.orchestrator import VassalOpsEngine  # Phase 20
 from src.ingestion.semantic_matcher import GMSemanticMatcher  # Intent Layer
 from src.diagnostics.harness_validator import GMHarnessValidator  # Safety Guard
 from src.execution.self_correction import GMSelfCorrectionController  # Self-Healing Layer
@@ -18,7 +18,7 @@ class LangGraphBrokerAdapter(GMANetworkBroker):
     def __init__(self, port: int = 8765):
         super().__init__(host="0.0.0.0", port=port)
         self.aggregator = WorkspaceContextAggregator()
-        self.engine = GMAIEngine()
+        self.engine = VassalOpsEngine()
         self.matcher = GMSemanticMatcher()
         self.validator = GMHarnessValidator()
         self.correction_engine = GMSelfCorrectionController()
@@ -111,5 +111,6 @@ if __name__ == "__main__":
         asyncio.run(adapter.start_server_async())
     except KeyboardInterrupt:
         print("\nServer stopped cleanly by user request.")
+
 
 

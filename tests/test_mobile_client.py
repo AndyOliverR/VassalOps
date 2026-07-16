@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import json
 import sys
 import os
@@ -10,7 +10,7 @@ except ImportError:
 
 async def simulate_mobile_payload():
     uri = "ws://localhost:8765"
-    print(f"[Mobile Link] Attempting to hook into GM AI Host at {uri}...")
+    print(f"[Mobile Link] Attempting to hook into VassalOps Host at {uri}...")
     
     try:
         async with websockets.connect(uri) as websocket:
@@ -32,5 +32,6 @@ async def simulate_mobile_payload():
 
 if __name__ == "__main__":
     asyncio.run(simulate_mobile_payload())
+
 
 

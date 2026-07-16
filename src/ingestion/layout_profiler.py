@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import json
 from typing import Dict, Any
@@ -8,11 +8,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 
 from src.ingestion.screen_capture import ScreenContextLayer
 
-class GMAILayoutProfiler:
+class VassalOpsLayoutProfiler:
     def __init__(self):
         self.capturer = ScreenContextLayer()
         self.registry_path = os.path.join("src", "ingestion", "window_layouts.json")
-        print("[GM AI Profiler] Automated Structural Layout Profiler active.")
+        print("[VassalOps Profiler] Automated Structural Layout Profiler active.")
 
     def profile_active_window(self, app_key: str) -> Dict[str, Any]:
         """Scans the active foreground application window and calculates relative grid targets."""
@@ -21,7 +21,7 @@ class GMAILayoutProfiler:
         win_w = right - left
         win_h = bottom - top
 
-        print(f"[GM AI Profiler] Profiling active window envelope for '{app_key}': {win_w}x{win_h}")
+        print(f"[VassalOps Profiler] Profiling active window envelope for '{app_key}': {win_w}x{win_h}")
 
         # Compute a standardized 9-point structural subdivision mesh layout mapping
         dynamic_profile = {
@@ -49,13 +49,14 @@ class GMAILayoutProfiler:
 
         with open(self.registry_path, "w") as f:
             json.dump(current_registry, f, indent=2)
-        print(f"[GM AI Profiler] Layout elements for '{app_key}' dynamically committed to registry matrix.")
+        print(f"[VassalOps Profiler] Layout elements for '{app_key}' dynamically committed to registry matrix.")
 
 if __name__ == "__main__":
-    profiler = GMAILayoutProfiler()
+    profiler = VassalOpsLayoutProfiler()
     app_name = "command_prompt"
-    print(f"[GM AI] Triggering automated surface scanning for profile key: {app_name}")
+    print(f"[VassalOps] Triggering automated surface scanning for profile key: {app_name}")
     profiler.profile_active_window(app_name)
+
 
 
 

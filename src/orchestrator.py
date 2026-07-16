@@ -1,4 +1,4 @@
-import urllib.request
+﻿import urllib.request
 import json
 import re
 from ingestion.parser import GMInputParser
@@ -7,7 +7,7 @@ from network.scraper import GMNetworkScraper
 from storage.db_manager import GMDatabaseManager
 from actions.bridge import GMActionBridge
 
-class GMAIEngine:
+class VassalOpsEngine:
     def __init__(self, model_name="gpt-oss:120b-cloud", host="127.0.0.1", port=11434):
         self.model_name = model_name
         self.url = f"http://{host}:{port}/api/generate"
@@ -134,6 +134,7 @@ class GMAIEngine:
                             pass
         except Exception as e:
             yield f"\n[PIPELINE EXCEPTION] Failed to connect to server: {e}"
+
 
 
 

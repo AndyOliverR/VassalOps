@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import time
 import json
@@ -7,7 +7,7 @@ from typing import Dict, List
 # Dynamically ensure top-level project module access
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-class GMAIDataExtractor:
+class VassalOpsDataExtractor:
     def __init__(self, target_dir: str = "storage/extracted_data/"):
         self.target_dir = target_dir
         os.makedirs(self.target_dir, exist_ok=True)
@@ -45,7 +45,7 @@ class GMAIDataExtractor:
             return "WRITE_FAILURE"
 
 if __name__ == "__main__":
-    extractor = GMAIDataExtractor()
+    extractor = VassalOpsDataExtractor()
     print("[VassalOps] Running local relational data extraction validation pass...")
     
     # Generate mock environment entity map data for testing
@@ -58,6 +58,7 @@ if __name__ == "__main__":
     
     result_path = extractor.export_scraped_entities(mock_entities, session_id="sandbox_test")
     print(f"[VassalOps] Data Extraction output verification target: {result_path}")
+
 
 
 

@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import asyncio
 import json
@@ -13,21 +13,21 @@ except ImportError:
 
 # Import the core LangGraph state engine, the execute node, and our audit tracker
 from app import gm_engine, execute_macros_node
-from src.execution.audit_ledger import GMAIAuditLedger
-from src.execution.background_scheduler import GMAIBackgroundDaemon
+from src.execution.audit_ledger import VassalOpsAuditLedger
+from src.execution.background_scheduler import VassalOpsBackgroundDaemon
 
 class GMANetworkBroker:
     def __init__(self, host: str = "0.0.0.0", port: int = 8765):
         self.host = host
         self.port = port
-        self.ledger = GMAIAuditLedger()
-        self.daemon_guard = GMAIBackgroundDaemon(check_interval_sec=10.0)
-        print(f"[GM AI Broker] Initialized Remote Macro Execution Broker on {self.host}:{self.port}")
+        self.ledger = VassalOpsAuditLedger()
+        self.daemon_guard = VassalOpsBackgroundDaemon(check_interval_sec=10.0)
+        print(f"[VassalOps Broker] Initialized Remote Macro Execution Broker on {self.host}:{self.port}")
 
     async def handle_stream(self, websocket):
         """Intercepts telemetry, extracts channel partition IDs, and runs workflows with physical macro injection."""
         remote_address = websocket.remote_address
-        print(f"\n[GM AI Broker] Active network connection hook: {remote_address}")
+        print(f"\n[VassalOps Broker] Active network connection hook: {remote_address}")
 
         try:
             async for message in websocket:
@@ -37,10 +37,10 @@ class GMANetworkBroker:
                     remote_intent = payload.get("command", "").strip()
                     channel_id = payload.get("channel", f"channel_{device_source.replace(' ', '_').lower()}")
 
-                    print(f"\n[GM AI Network Task] Received via Channel '{channel_id}' [{device_source}]: '{remote_intent}'")
+                    print(f"\n[VassalOps Network Task] Received via Channel '{channel_id}' [{device_source}]: '{remote_intent}'")
 
                     if remote_intent:
-                        print(f"[GM AI Broker] Initializing state graph pipeline loop...")
+                        print(f"[VassalOps Broker] Initializing state graph pipeline loop...")
                         thread_config = {"configurable": {"thread_id": f"session_{channel_id}"}}
                         initial_state = {"raw_user_input": remote_intent, "approval_status": "pending"}
 
@@ -69,26 +69,26 @@ class GMANetworkBroker:
                         user_approval = input("\n[Bot-Sitter Authorization] Approve this wireless remote plan? (y/n): ")
                         if user_approval.lower() == 'y':
                             current_state["approval_status"] = "approved"
-                            print("\n[GM AI Broker] Wireless approval signed. Injecting hardware execution chain...")
+                            print("\n[VassalOps Broker] Wireless approval signed. Injecting hardware execution chain...")
                             
                             # Phase 19 Fix: Explicitly fire macro execution module to trigger mouse/keyboard commands locally
                             execute_macros_node(current_state)
 
                             self.ledger.commit_transaction(intent=remote_intent, status="success_completed", device=device_source, channel=channel_id)
-                            print(f"[GM AI Broker] Task successfully executed on channel: {channel_id}")
+                            print(f"[VassalOps Broker] Task successfully executed on channel: {channel_id}")
                         else:
                             self.ledger.commit_transaction(intent=remote_intent, status="rejected_by_user", device=device_source, channel=channel_id)
-                            print(f"[GM AI Broker] Task rejected on channel: {channel_id}")
+                            print(f"[VassalOps Broker] Task rejected on channel: {channel_id}")
 
                 except json.JSONDecodeError:
                     await websocket.send(json.dumps({"status": "ERROR", "msg": "Invalid JSON structural format"}))
 
         except websockets.exceptions.ConnectionClosed:
-            print(f"[GM AI Broker] Closed network connection loop for: {remote_address}")
+            print(f"[VassalOps Broker] Closed network connection loop for: {remote_address}")
 
     async def main_loop(self):
         async with websockets.serve(self.handle_stream, self.host, self.port):
-            print("[GM AI Broker] Multi-Tenant Gateway Online. Ready...")
+            print("[VassalOps Broker] Multi-Tenant Gateway Online. Ready...")
             self.daemon_guard.start()
             await asyncio.Future()
 
@@ -96,12 +96,13 @@ class GMANetworkBroker:
         try:
             asyncio.run(self.main_loop())
         except KeyboardInterrupt:
-            print("\n[GM AI Broker] Shutting down network listeners cleanly.")
+            print("\n[VassalOps Broker] Shutting down network listeners cleanly.")
             self.daemon_guard.stop()
 
 if __name__ == "__main__":
     broker = GMANetworkBroker()
     broker.start_server()
+
 
 
 

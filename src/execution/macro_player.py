@@ -12,15 +12,15 @@ try:
 except ImportError:
     raise ImportError("Dependency missing. Please run: pip install pyautogui")
 
-class GMAIMacroPlayer:
+class VassalOpsMacroPlayer:
     def __init__(self, target_filename: str = "recorded_macro.json"):
         self.target_path = os.path.join("storage", target_filename)
-        print(f"[GM AI Player] Initializing macro play suite for: {self.target_path}")
+        print(f"[VassalOps Player] Initializing macro play suite for: {self.target_path}")
 
     def execute_replay(self):
         """Reads the structural timeline log and mimics captured interactions with human delay mapping."""
         if not os.path.exists(self.target_path):
-            print(f"[GM AI Player] Error: Macro tracking artifact missing at {self.target_path}")
+            print(f"[VassalOps Player] Error: Macro tracking artifact missing at {self.target_path}")
             return False
 
         with open(self.target_path, "r") as f:
@@ -28,11 +28,11 @@ class GMAIMacroPlayer:
 
         steps = macro_data.get("steps", [])
         if not steps:
-            print("[GM AI Player] Warning: Target macro profile steps are empty.")
+            print("[VassalOps Player] Warning: Target macro profile steps are empty.")
             return False
 
         print(f"\n======================================================")
-        print(f" GM AI Macro Replay Initiated — Total Steps: {len(steps)}")
+        print(f" VassalOps Macro Replay Initiated — Total Steps: {len(steps)}")
         print(f"======================================================")
         print("[!] Move your mouse cursor to the top-left corner to abort execution instantly.")
         time.sleep(2.0) # Grace delay to let user switch focus if needed
@@ -54,7 +54,7 @@ class GMAIMacroPlayer:
                 x, y = step["x"], step["y"]
                 button_str = step["button"].lower()
                 btn = "left" if "left" in button_str else "right" if "right" in button_str else "middle"
-                
+
                 pyautogui.moveTo(x, y, duration=0.2)
                 pyautogui.click(button=btn)
 
@@ -67,13 +67,10 @@ class GMAIMacroPlayer:
                     pyautogui.write(key)
 
         print("======================================================")
-        print("[GM AI Player] Macro sequence completed successfully.")
+        print("[VassalOps Player] Macro sequence completed successfully.")
         print("======================================================\n")
         return True
 
 if __name__ == "__main__":
-    player = GMAIMacroPlayer()
+    player = VassalOpsMacroPlayer()
     player.execute_replay()
-
-
-
