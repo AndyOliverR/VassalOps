@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -57,7 +57,7 @@
 <body>
 
     <div class="top-nav-bar">
-        <button class="settings-gear-btn" id="toggleSettingsBtn" title="Open Customization Settings">⚙️</button>
+        <button class="settings-gear-btn" id="toggleSettingsBtn" title="Open Customization Settings">âš™ï¸</button>
     </div>
 
     <div class="settings-panel" id="settingsPanel">
@@ -83,7 +83,7 @@
 
     <div class="controls-capsule">
         <input type="text" id="userInputField" class="text-input" placeholder="Type your command or click mic..." autocomplete="off">
-        <button class="action-btn" id="micButton" title="Simulate Voice Input">🎙</button>
+        <button class="action-btn" id="micButton" title="Simulate Voice Input">ðŸŽ™</button>
         <button class="run-btn" id="runButton">Run</button>
     </div>
     <script>
@@ -117,7 +117,7 @@
             const wallpaperInput = document.getElementById('settingBgWallpaper');
             
             // RECTIFIED: Added explicit array indexing [0] to read file stream layers correctly
-            if (avatarInput.files && avatarInput.files[0]) {
+                        if (avatarInput.files && avatarInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     currentUserAvatarBase64 = event.target.result;
@@ -125,7 +125,7 @@
                 };
                 reader.readAsDataURL(avatarInput.files[0]);
             }
-            
+
             if (wallpaperInput.files && wallpaperInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
@@ -135,79 +135,13 @@
                 };
                 reader.readAsDataURL(wallpaperInput.files[0]);
             }
-            
             settingsPanel.classList.remove('open');
         });
 
-        // Completely reset workspace background wallpaper choice
         clearBgBtn.addEventListener('click', () => {
             currentWallpaperBase64 = '';
             localStorage.removeItem('vassal_wallpaper_b64');
             document.body.style.backgroundImage = 'none';
-        });
-
-        let currentAgentTextRow = null;
-
-        function appendMessage(sender, text) {
-            const container = document.createElement('div');
-            container.className = 'msg-container';
-            
-            if (sender === 'USER') {
-                const userPic = currentUserAvatarBase64 ? `<img src="${currentUserAvatarBase64}" class="avatar-frame">` : '👤';
-                container.innerHTML = `
-                    <div class="header-row user-color">${userPic} ${currentUsername}</div>
-                    <div class="text-row">${text}</div>
-                `;
-                chatStream.appendChild(container);
-            } else if (sender === 'VASSAL') {
-                container.innerHTML = `
-                    <div class="header-row agent-color"><img src="app_icon.png" class="avatar-frame" onerror="this.src='🛡️'"> VassalOps</div>
-                    <div class="text-row" id="latestResponse">${text}</div>
-                `;
-                chatStream.appendChild(container);
-                currentAgentTextRow = container.querySelector('#latestResponse');
-            }
-            chatStream.scrollTop = chatStream.scrollHeight;
-        }
-
-        // Exposed Global Response Streaming Handlers
-        window.appendTokenToStream = function(token) {
-            if (!currentAgentTextRow) appendMessage('VASSAL', '');
-            currentAgentTextRow.innerText += token;
-            chatStream.scrollTop = chatStream.scrollHeight;
-        };
-
-        window.finalizeStream = function() {
-            currentAgentTextRow = null;
-        };
-
-        function dispatchCommand() {
-            const query = inputField.value.trim();
-            if (!query) return;
-            
-            inputField.value = '';
-            appendMessage('USER', query);
-            
-            if (window.pywebview && window.pywebview.api && window.pywebview.api.dispatch_to_engine) {
-                window.pywebview.api.dispatch_to_engine(query);
-            } else {
-                setTimeout(() => {
-                    window.appendTokenToStream("Hello " + currentUsername + "! How May I help?");
-                    window.finalizeStream();
-                }, 800);
-            }
-        }
-
-        runButton.addEventListener('click', dispatchCommand);
-        inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') dispatchCommand(); });
-        
-        micButton.addEventListener('click', () => {
-            inputField.value = "voice open config";
-            const line = document.createElement('div');
-            line.className = 'system-line';
-            line.innerText = "[Voice Activation Sensed... Transcribing audio values]";
-            chatStream.appendChild(line);
-            setTimeout(dispatchCommand, 1000);
         });
     </script>
 </body>
