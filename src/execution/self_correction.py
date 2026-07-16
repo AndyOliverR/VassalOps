@@ -1,4 +1,4 @@
-﻿import json
+import json
 import urllib.request
 import logging
 from src.execution.scratchpad_manager import GMScratchpadManager
@@ -89,3 +89,4 @@ if __name__ == "__main__":
     print("\n--- FINAL LIVE SUMMARY ---")
     print(f"Status: {summary['final_status']}")
     print(f"Captured Output: {summary.get('stdout')}")
+

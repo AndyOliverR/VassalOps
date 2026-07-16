@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 
 logger = logging.getLogger("GMHarnessValidator")
 
@@ -37,3 +37,4 @@ if __name__ == "__main__":
     test_pass = validator.verify_action("open config")
     print(f"[HARNESS TEST] Malicious Command: {test_fail['status']} (Reason: {test_fail['reason']})")
     print(f"[HARNESS TEST] Valid Command: {test_pass['status']}")
+

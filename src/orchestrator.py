@@ -117,7 +117,7 @@ class GMAIEngine:
         context_string = ""
         for turn in history[:-1]:
             context_string += f"{turn['role'].upper()}: {turn['content']}\n"
-        context_string += f"BOT_SITTER: {user_prompt}\nVassalOps_ENGINE:"
+        context_string += f"USER: {user_prompt}\nASSISTANT:"
 
         payload = {"model": self.model_name, "prompt": context_string.strip(), "stream": True}
         data = json.dumps(payload).encode('utf-8')
@@ -134,5 +134,7 @@ class GMAIEngine:
                             pass
         except Exception as e:
             yield f"\n[PIPELINE EXCEPTION] Failed to connect to server: {e}"
+
+
 
 

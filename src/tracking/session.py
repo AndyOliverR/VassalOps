@@ -36,3 +36,4 @@ class GMSessionTracker:
             json.dump(history, f, indent=4)
         return history
 
+

@@ -32,3 +32,4 @@ class GMTelemetrySensor:
             f"- Disk Allocation (C:): {diag['disk_free_gb']} GB Free / {diag['disk_total_gb']} GB Total\n"
             f"- Core Path: {diag['workspace_directory']}"
         )
+

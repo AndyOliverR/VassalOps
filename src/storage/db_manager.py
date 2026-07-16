@@ -74,3 +74,4 @@ class GMDatabaseManager:
             # Reverse order to restore historical progression sequence flow
             return [{"role": r[0], "content": r[1]} for r in reversed(rows)]
 
+

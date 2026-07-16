@@ -3,269 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM AI v1.7 -- Partitioned Telemetry Dashboard Portal</title>
+    <title>VassalOps</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; padding: 30px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e293b; padding-bottom: 20px; margin-bottom: 25px; }
-        .title h1 { font-size: 24px; color: #38bdf8; font-weight: 600; letter-spacing: 0.5px; }
-        .title p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
-        .badge { padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; }
-        .status-online { background: #22c55e; color: #ffffff; box-shadow: 0 0 10px rgba(34,197,94,0.3); }
-        .status-offline { background: #ef4444; color: #ffffff; box-shadow: 0 0 10px rgba(239,68,68,0.3); }
-        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; }
-        .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; letter-spacing: 0.5px; }
-        .stat-value { font-size: 24px; font-weight: 700; color: #f1f5f9; margin-top: 6px; font-family: monospace; }
-        .layout-container { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
-        .card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 24px; }
-        .card h2 { font-size: 14px; color: #f1f5f9; margin-bottom: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-left: 4px solid #38bdf8; padding-left: 10px; }
-        .channel-item { display: block; width: 100%; padding: 12px 16px; margin-bottom: 8px; background: #090d16; border: 1px solid #1e293b; border-radius: 8px; color: #94a3b8; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 600; }
-        .channel-item:hover { border-color: #38bdf8; color: #f8fafc; }
-        .channel-item.active { background: rgba(56,189,248,0.1); border-color: #38bdf8; color: #38bdf8; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { font-size: 11px; text-transform: uppercase; color: #94a3b8; padding: 12px; border-bottom: 2px solid #334155; font-weight: 600; }
-        td { font-size: 13px; padding: 12px; border-bottom: 1px solid #334155; color: #e2e8f0; }
-        .stream-box { background: #090d16; border-radius: 8px; border: 1px solid #1e293b; height: 350px; overflow-y: auto; padding: 16px; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #38bdf8; line-height: 1.6; }
-        .input-group { display: flex; gap: 12px; margin-top: 20px; }
-        input[type="text"] { flex: 1; background: #090d16; border: 1px solid #334155; border-radius: 8px; padding: 12px; color: #f8fafc; font-size: 13px; outline: none; }
-        button { background: #38bdf8; color: #0f172a; border: none; border-radius: 8px; padding: 12px 20px; font-weight: 700; font-size: 13px; cursor: pointer; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI Semibold', 'Segoe UI', sans-serif; }
+        body { background: #1A202C; background-size: cover; background-position: center; color: #E2E8F0; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; }
         
-        /* New Interactive Remote Action Control Buttons Styles */
-        .gate-actions { display: flex; gap: 12px; margin-top: 20px; padding: 16px; background: #090d16; border-radius: 8px; border: 1px solid #334155; display: none; align-items: center; justify-content: space-between; }
-        .gate-msg { font-size: 13px; color: #38bdf8; font-weight: 600; }
-        .gate-buttons { display: flex; gap: 10px; }
-        .btn-approve { background: #22c55e; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; }
-        .btn-approve:hover { background: #16a34a; }
-        .btn-reject { background: #ef4444; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; }
-        .btn-reject:hover { background: #dc2626; }
+        /* Top Right Minimalist Settings Gear Icon Button Link */
+        .top-nav-bar { position: absolute; top: 20px; right: 25px; display: flex; align-items: center; z-index: 10; }
+        .settings-gear-btn { background: transparent; border: none; font-size: 20px; color: #A0AEC0; cursor: pointer; display: flex; align-items: center; transition: color 0.15s ease; }
+        .settings-gear-btn:hover { color: #FFFFFF; }
+
+        /* Slide-Out Customizer Configuration Menu Panel Drawer */
+        .settings-panel { position: absolute; top: 0; right: -320px; width: 300px; height: 100vh; background: #2D3748; box-shadow: -1px 0 20px rgba(0,0,0,0.5); z-index: 100; padding: 30px 20px; transition: right 0.25s cubic-bezier(0.1, 0.9, 0.2, 1); display: flex; flex-direction: column; gap: 20px; }
+        .settings-panel.open { right: 0; }
+        .settings-panel h3 { font-size: 15px; color: #81E6D9; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #4A5568; padding-bottom: 10px; }
+        .settings-row { display: flex; flex-direction: column; gap: 6px; }
+        .settings-row label { font-size: 12px; color: #A0AEC0; }
+        .settings-row input[type="text"] { background: #1A202C; border: 1px solid #4A5568; border-radius: 6px; padding: 8px 12px; color: #FFFFFF; font-size: 14px; outline: none; }
+        .settings-row input[type="file"] { font-size: 12px; color: #A0AEC0; margin-top: 4px; }
+
+        .clear-bg-btn { background: #4A5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; align-self: flex-start; margin-top: 2px; }
+        .clear-bg-btn:hover { background: #718096; }
+        .close-settings-btn { background: #319795; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: auto; transition: background 0.1s; }
+        .close-settings-btn:hover { background: #234E52; }
+
+        /* Main Dialogue Stream Box Framework */
+        #chatStream { flex: 1; overflow-y: auto; padding-right: 10px; margin-top: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 24px; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
+        .system-line { color: #A0AEC0; font-size: 13px; font-style: italic; opacity: 0.8; }
+        
+        .msg-container { display: flex; flex-direction: column; gap: 6px; animation: fadeIn 0.2s ease-out; }
+        .header-row { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; letter-spacing: 0.3px; }
+        .text-row { font-size: 15px; font-weight: 400; line-height: 1.5; color: #EDF2F7; padding-left: 30px; white-space: pre-wrap; }
+        
+        .user-color { color: #D6BCFA; }
+        .agent-color { color: #81E6D9; }
+        
+        /* Clean Icon Framing Layout With Transparent Background Overrides */
+        .avatar-frame { width: 22px; height: 22px; object-fit: cover; border-radius: 50%; vertical-align: middle; background: transparent !important; display: inline-block; border: none !important; box-shadow: none !important; }
+        
+        /* Bottom Control Capsule Bar Zone */
+        .controls-capsule { display: flex; align-items: center; background: #2D3748; border-radius: 12px; padding: 6px 16px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .text-input { flex: 1; background: transparent; border: none; outline: none; color: #FFFFFF; font-size: 15px; padding: 12px 6px; }
+        .text-input::placeholder { color: #718096; }
+        
+        .action-btn { background: transparent; border: none; color: #A0AEC0; font-size: 18px; padding: 8px; cursor: pointer; transition: color 0.15s ease; margin-left: 6px; }
+        .action-btn:hover { color: #FFFFFF; }
+        .run-btn { background: #319795; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; margin-left: 12px; transition: background 0.15s ease; }
+        .run-btn:hover { background: #234E52; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">
-            <h1>GM AI Multi-Tenant Portal</h1>
-            <p>Phase 21 - Live Remote Web UI Plan Approval Gate Integration</p>
-        </div>
-        <div id="statusBadge" class="badge status-offline">Connecting</div>
+
+    <div class="top-nav-bar">
+        <button class="settings-gear-btn" id="toggleSettingsBtn" title="Open Customization Settings">⚙️</button>
     </div>
 
-    <div class="stats-bar">
-        <div class="stat-card">
-            <span class="stat-label">Total Session Actions</span>
-            <span id="statActions" class="stat-value">0</span>
+    <div class="settings-panel" id="settingsPanel">
+        <h3>Workspace Profile Settings</h3>
+        <div class="settings-row">
+            <label>User Identity Name:</label>
+            <!-- RECTIFIED: Removed the hardcoded value so it dynamically pulls whatever is saved or defaults to HP -->
+            <input type="text" id="settingUsername" value="">
         </div>
-        <div class="stat-card">
-            <span class="stat-label">Daemon Heartbeat Scans</span>
-            <span id="statHeartbeats" class="stat-value">0</span>
+        <div class="settings-row">
+            <label>Upload Account Avatar Photo:</label>
+            <input type="file" id="settingUserAvatar" accept="image/*">
         </div>
-        <div class="stat-card">
-            <span class="stat-label">Active Tenant Channels</span>
-            <span id="statChannels" class="stat-value">1</span>
+        <div class="settings-row">
+            <label>Set Background Wallpaper Image:</label>
+            <input type="file" id="settingBgWallpaper" accept="image/*">
+            <button class="clear-bg-btn" id="clearBgBtn">Remove Wallpaper</button>
         </div>
+        <button class="close-settings-btn" id="closeSettingsBtn">Save Profile Settings</button>
     </div>
 
-    <div class="layout-container">
-        <div class="card" style="height: fit-content;">
-            <h2>Active Tenant Channels</h2>
-            <div id="channelContainer">
-                <button class="channel-item active" onclick="switchChannel('all')">All Shared Events</button>
-            </div>
-        </div>
-        <div>
-            <div class="card">
-                <h2>Channel Isolated Audit Ledger</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 10%;">ID</th>
-                            <th style="width: 25%;">Device Source</th>
-                            <th style="width: 45%;">Command Intent</th>
-                            <th style="width: 20%;">Execution Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="auditTableBody">
-                        <!-- Dynamic data row maps load here -->
-                    </tbody>
-                </table>
-                
-                <!-- Live Interactive Remote Approval Gate Banner UI Element -->
-                <div id="approvalGate" class="gate-actions">
-                    <div class="gate-msg">?? Wireless Plan Pending: Awaiting Host Authorization Signature...</div>
-                    <div class="gate-buttons">
-                        <button class="btn-approve" onclick="submitGateDecision('y')">Approve & Execute</button>
-                        <button class="btn-reject" onclick="submitGateDecision('n')">Reject & Abort</button>
-                    </div>
-                </div>
+    <div id="chatStream"></div>
 
-                <div class="input-group">
-                    <input type="text" id="cmdInput" placeholder="Dispatch instructions to active channel context...">
-                    <button onclick="dispatchCommand()">Run Action</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Live Telemetry Logs</h2>
-                <div id="logStream" class="stream-box"></div>
-            </div>
-        </div>
+    <div class="controls-capsule">
+        <input type="text" id="userInputField" class="text-input" placeholder="Type your command or click mic..." autocomplete="off">
+        <button class="action-btn" id="micButton" title="Simulate Voice Input">🎙</button>
+        <button class="run-btn" id="runButton">Run</button>
     </div>
-
     <script>
-        let ws;
-        let activeChannel = 'all';
-        const trackedChannels = new Set();
-        let totalActionsCount = 0;
-        let backgroundHeartbeatsCount = 0;
-
-        const statusBadge = document.getElementById('statusBadge');
-        const logStream = document.getElementById('logStream');
-        const tableBody = document.getElementById('auditTableBody');
-        const channelContainer = document.getElementById('channelContainer');
-        const approvalGate = document.getElementById('approvalGate');
+        const chatStream = document.getElementById('chatStream');
+        const inputField = document.getElementById('userInputField');
+        const runButton = document.getElementById('runButton');
+        const micButton = document.getElementById('micButton');
+        const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const clearBgBtn = document.getElementById('clearBgBtn');
+        const settingsPanel = document.getElementById('settingsPanel');
         
-        const statActions = document.getElementById('statActions');
-        const statHeartbeats = document.getElementById('statHeartbeats');
-        const statChannels = document.getElementById('statChannels');
+        let currentUsername = localStorage.getItem('vassal_user_name') || 'HP';
+        let currentUserAvatarBase64 = localStorage.getItem('vassal_user_avatar_b64') || '';
+        let currentWallpaperBase64 = localStorage.getItem('vassal_wallpaper_b64') || '';
 
-        function connectSocket() {
-            ws = new WebSocket('ws://' + (window.location.hostname || 'localhost') + ':8765');
-
-            ws.onopen = () => {
-                statusBadge.textContent = 'ONLINE';
-                statusBadge.className = 'badge status-online';
-                appendLog('Multi-tenant WebSocket connection secured.');
-            };
-
-            ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    
-                    const id = data.id || 'NEW';
-                    const device = data.device || 'Remote Client';
-                    const intent = data.command || data.msg || 'Unknown Operation';
-                    const status = data.status || 'PENDING_AUTH';
-                    const channel = data.channel || 'main_session';
-
-                    // Track metrics and counters cleanly
-                    if (channel === 'background_telemetry') {
-                        backgroundHeartbeatsCount++;
-                        statHeartbeats.textContent = backgroundHeartbeatsCount;
-                    } else {
-                        totalActionsCount++;
-                        statActions.textContent = totalActionsCount;
-                    }
-
-                    // Dynamically surface the interactive choice banner on incoming confirmation state payloads
-                    if (status === 'AWAITING_HUMAN_CONFIRMATION') {
-                        approvalGate.style.display = 'flex';
-                        appendLog(`[ALERT] Action plan on channel [${channel.toUpperCase()}] triggered the human safety gate!`);
-                    }
-
-                    if (!trackedChannels.has(channel)) {
-                        trackedChannels.add(channel);
-                        renderChannelButtons();
-                        statChannels.textContent = trackedChannels.size + 1;
-                    }
-
-                    let statusColor = '#38bdf8';
-                    if (status.includes('success') || status.includes('EXECUTED') || status.includes('AUDITED')) statusColor = '#22c55e';
-                    if (status.includes('rejected') || status.includes('ERROR')) statusColor = '#ef4444';
-
-                    const newRow = `<tr class="audit-row" data-channel="${channel}">
-                        <td>#${id}</td>
-                        <td><strong>${device}</strong></td>
-                        <td>${intent}</td>
-                        <td style="color: ${statusColor}; font-weight:700; font-size:12px;">${status.replace('_', ' ')}</td>
-                    </tr>`;
-                    
-                    tableBody.innerHTML = newRow + tableBody.innerHTML;
-                    applyFilter();
-                    
-                } catch(e) {
-                    appendLog('Raw telemetry: ' + event.data);
-                }
-            };
-
-            ws.onclose = () => {
-                statusBadge.textContent = 'OFFLINE';
-                statusBadge.className = 'badge status-offline';
-                approvalGate.style.display = 'none';
-                appendLog('Handshake dropped. Reconnecting...');
-                setTimeout(connectSocket, 5000);
-            };
+        // Dynamically initialize current user values from localStorage cache
+        document.getElementById('settingUsername').value = currentUsername;
+        if (currentWallpaperBase64) {
+            document.body.style.backgroundImage = `url(${currentWallpaperBase64})`;
         }
 
-        function submitGateDecision(decision) {
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        // Slide Drawer Interaction Triggers
+        toggleSettingsBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
+        
+        closeSettingsBtn.addEventListener('click', () => {
+            currentUsername = document.getElementById('settingUsername').value.trim() || 'HP';
+            localStorage.setItem('vassal_user_name', currentUsername);
             
-            // Build the back-channel telemetry signature response token payload
-            const responsePayload = {
-                type: "gate_authorization",
-                decision: decision,
-                channel: activeChannel === 'all' ? 'main_session' : activeChannel
-            };
+            const avatarInput = document.getElementById('settingUserAvatar');
+            const wallpaperInput = document.getElementById('settingBgWallpaper');
             
-            ws.send(JSON.stringify(responsePayload));
-            approvalGate.style.display = 'none';
-            appendLog(`Submitted remote gate signature choice: [${decision.toUpperCase()}]`);
+            // RECTIFIED: Added explicit array indexing [0] to read file stream layers correctly
+            if (avatarInput.files && avatarInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentUserAvatarBase64 = event.target.result;
+                    localStorage.setItem('vassal_user_avatar_b64', event.target.result);
+                };
+                reader.readAsDataURL(avatarInput.files[0]);
+            }
+            
+            if (wallpaperInput.files && wallpaperInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentWallpaperBase64 = event.target.result;
+                    localStorage.setItem('vassal_wallpaper_b64', event.target.result);
+                    document.body.style.backgroundImage = `url(${event.target.result})`;
+                };
+                reader.readAsDataURL(wallpaperInput.files[0]);
+            }
+            
+            settingsPanel.classList.remove('open');
+        });
+
+        // Completely reset workspace background wallpaper choice
+        clearBgBtn.addEventListener('click', () => {
+            currentWallpaperBase64 = '';
+            localStorage.removeItem('vassal_wallpaper_b64');
+            document.body.style.backgroundImage = 'none';
+        });
+
+        let currentAgentTextRow = null;
+
+        function appendMessage(sender, text) {
+            const container = document.createElement('div');
+            container.className = 'msg-container';
+            
+            if (sender === 'USER') {
+                const userPic = currentUserAvatarBase64 ? `<img src="${currentUserAvatarBase64}" class="avatar-frame">` : '👤';
+                container.innerHTML = `
+                    <div class="header-row user-color">${userPic} ${currentUsername}</div>
+                    <div class="text-row">${text}</div>
+                `;
+                chatStream.appendChild(container);
+            } else if (sender === 'VASSAL') {
+                container.innerHTML = `
+                    <div class="header-row agent-color"><img src="app_icon.png" class="avatar-frame" onerror="this.src='🛡️'"> VassalOps</div>
+                    <div class="text-row" id="latestResponse">${text}</div>
+                `;
+                chatStream.appendChild(container);
+                currentAgentTextRow = container.querySelector('#latestResponse');
+            }
+            chatStream.scrollTop = chatStream.scrollHeight;
         }
 
-        function renderChannelButtons() {
-            let html = `<button class="channel-item ${activeChannel === 'all' ? 'active' : ''}" onclick="switchChannel('all')">All Shared Events</button>`;
-            trackedChannels.forEach(ch => {
-                html += `<button class="channel-item ${activeChannel === ch ? 'active' : ''}" onclick="switchChannel('${ch}')">Channel: ${ch.toUpperCase()}</button>`;
-            });
-            channelContainer.innerHTML = html;
-        }
+        // Exposed Global Response Streaming Handlers
+        window.appendTokenToStream = function(token) {
+            if (!currentAgentTextRow) appendMessage('VASSAL', '');
+            currentAgentTextRow.innerText += token;
+            chatStream.scrollTop = chatStream.scrollHeight;
+        };
 
-        function switchChannel(channelName) {
-            activeChannel = channelName;
-            renderChannelButtons();
-            applyFilter();
-            appendLog(`Viewport partition filter swapped to: ${channelName.toUpperCase()}`);
-        }
-
-        function applyFilter() {
-            const rows = document.querySelectorAll('.audit-row');
-            rows.forEach(row => {
-                const rowChannel = row.getAttribute('data-channel');
-                if (activeChannel === 'all' || rowChannel === activeChannel) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function appendLog(msg) {
-            const time = new Date().toLocaleTimeString();
-            logStream.innerHTML += `[${time}] ${msg}<br>`;
-            logStream.scrollTop = logStream.scrollHeight;
-        }
+        window.finalizeStream = function() {
+            currentAgentTextRow = null;
+        };
 
         function dispatchCommand() {
-            const input = document.getElementById('cmdInput');
-            const cmdText = input.value.trim();
-            if (!cmdText) return;
-
-            const payload = {
-                device: "Web UI Dashboard",
-                command: cmdText,
-                channel: activeChannel === 'all' ? 'main_session' : activeChannel
-            };
-
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(payload));
-                appendLog(`Dispatched command to channel context [${payload.channel.toUpperCase()}]: "${cmdText}"`);
-                input.value = '';
+            const query = inputField.value.trim();
+            if (!query) return;
+            
+            inputField.value = '';
+            appendMessage('USER', query);
+            
+            if (window.pywebview && window.pywebview.api && window.pywebview.api.dispatch_to_engine) {
+                window.pywebview.api.dispatch_to_engine(query);
             } else {
-                appendLog('Error: Gateway connection down.');
+                setTimeout(() => {
+                    window.appendTokenToStream("Hello " + currentUsername + "! How May I help?");
+                    window.finalizeStream();
+                }, 800);
             }
         }
 
-        connectSocket();
+        runButton.addEventListener('click', dispatchCommand);
+        inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') dispatchCommand(); });
+        
+        micButton.addEventListener('click', () => {
+            inputField.value = "voice open config";
+            const line = document.createElement('div');
+            line.className = 'system-line';
+            line.innerText = "[Voice Activation Sensed... Transcribing audio values]";
+            chatStream.appendChild(line);
+            setTimeout(dispatchCommand, 1000);
+        });
     </script>
 </body>
 </html>
-

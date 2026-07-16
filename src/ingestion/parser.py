@@ -43,3 +43,4 @@ class GMInputParser:
             return {"status": "BLOCKED", "error": str(ve), "prompt": ""}
         except Exception as e:
             return {"status": "MALFORMED", "error": f"Invalid payload schema: {str(e)}", "prompt": ""}
+

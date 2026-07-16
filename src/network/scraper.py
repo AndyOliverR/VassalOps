@@ -31,3 +31,4 @@ class GMNetworkScraper:
                 
         except Exception as e:
             return f"[NETWORK PIPELINE FAILURE] Could not scrape target URL: {str(e)}"
+

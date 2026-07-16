@@ -54,3 +54,4 @@ if __name__ == "__main__":
     print(f"[GM AI] Job profile successfully generated at: {path}")
 
 
+

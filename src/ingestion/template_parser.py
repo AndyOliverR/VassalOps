@@ -36,3 +36,4 @@ if __name__ == "__main__":
     print(f"[GM AI] Parsed Visual Context Coordinates: {coordinates}")
 
 
+

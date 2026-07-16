@@ -53,7 +53,7 @@ def parse_intent_node(state: GMState) -> Dict:
     print("[GM AI] [Brain Active] Fetching local source context and processing Ollama instruction traces...")
     live_codebase_context = workspace_aggregator.scan_workspace_text()
     ollama_url = "http://localhost:11434/api/generate"
-    system_prompt = f"You are GM AI, a seamless extension of the human mind. Convert the user's raw, fragmented instruction into a highly structured JSON plan containing an array of 'steps'. Each step must be an object with 'type' and 'payload'.\nFor core technical alignment, your native engine code context is loaded here:\n{live_codebase_context}"
+    system_prompt = f"You are GM AI, a seamless extension of the human mind. Convert the instruction directly into an optimization automation directive structure. Keep conversational outputs brief, direct, and simple. Do not hallucinate historical traces.
     prompt_payload = f"Sensed Screen OCR Layout: {state['captured_context']}\nUser Intent Input: {state['raw_user_input']}"
     structured_steps = None
     try:
@@ -155,6 +155,7 @@ if __name__ == "__main__":
             execute_macros_node(state)
         else:
             print("[GM AI] Execution aborted by human bot-sitter. State preserved safely.")
+
 
 
 

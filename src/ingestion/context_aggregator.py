@@ -78,3 +78,4 @@ if __name__ == "__main__":
     print(f"[SUCCESS] Gitignore checks complete. Tracked {file_count} active text modules.")
     print(f"[METRICS] Filtered context snapshot size: {total_characters} characters.")
 
+
