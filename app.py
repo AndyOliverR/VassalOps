@@ -1,4 +1,4 @@
-import os, sys, time, json, requests, pyautogui, keyboard, pyperclip
+﻿import os, sys, time, json, requests, pyautogui, keyboard, pyperclip
 from typing import Dict, TypedDict, Optional, List
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -29,6 +29,12 @@ class VassalOpsState(TypedDict):
 import sqlite3
 db_connection = sqlite3.connect("gm_memory.db", check_same_thread=False)
 memory = SqliteSaver(db_connection)
+
+from src.execution.ollama_guard import VassalOpsOllamaGuard
+
+# Initialize and verify local server node integrity before state graph assembly
+ollama_guard = VassalOpsOllamaGuard()
+ollama_guard.ensure_service_active()
 
 screen_layer = ScreenContextLayer()
 ocr_engine = VassalOpsScreenOCRReader()
@@ -150,3 +156,4 @@ if __name__ == "__main__":
     print("======================================================")
     print("VassalOps Core Engine Online -- Voice Audit Active")
     print("======================================================")
+
