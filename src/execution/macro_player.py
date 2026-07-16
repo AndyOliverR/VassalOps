@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import json
 import time
@@ -17,7 +17,7 @@ class VassalOpsMacroPlayer:
         self.target_path = os.path.join("storage", target_filename)
         print(f"[VassalOps Player] Initializing macro play suite for: {self.target_path}")
 
-    def execute_replay(self):
+    def execute_replay(self) -> bool:
         """Reads the structural timeline log and mimics captured interactions with human delay mapping."""
         if not os.path.exists(self.target_path):
             print(f"[VassalOps Player] Error: Macro tracking artifact missing at {self.target_path}")
@@ -35,7 +35,7 @@ class VassalOpsMacroPlayer:
         print(f" VassalOps Macro Replay Initiated — Total Steps: {len(steps)}")
         print(f"======================================================")
         print("[!] Move your mouse cursor to the top-left corner to abort execution instantly.")
-        time.sleep(2.0) # Grace delay to let user switch focus if needed
+        time.sleep(2.0)  # Grace delay to let user switch focus if needed
 
         last_step_time = 0.0
 
@@ -54,6 +54,16 @@ class VassalOpsMacroPlayer:
                 x, y = step["x"], step["y"]
                 button_str = step["button"].lower()
                 btn = "left" if "left" in button_str else "right" if "right" in button_str else "middle"
+
+                # Visual Coordinate Boundary Verification Check
+                try:
+                    screen_w, screen_h = pyautogui.size()
+                    if x > screen_w or y > screen_h:
+                        print(f"  [!] Visual Warning: Point ({x}, {y}) outside display boundaries ({screen_w}x{screen_h}). Clipping bounds...")
+                        x = min(x, screen_w - 10)
+                        y = min(y, screen_h - 10)
+                except Exception as ex:
+                    print(f"  [!] Coordinate boundary validation warning: {ex}")
 
                 pyautogui.moveTo(x, y, duration=0.2)
                 pyautogui.click(button=btn)
