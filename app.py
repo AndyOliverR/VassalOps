@@ -154,6 +154,40 @@ class VassalOpsAPI:
 
     def submit_command(self, user_input: str) -> str:
         """Receives text from the HTML chat, routes it, and returns the response."""
+        cleaned = user_input.lower().strip()
+        
+        # Intercept and route conversational ambient diagnostic questions instantly
+        if "health" in cleaned or "optimize system" in cleaned or "check system" in cleaned:
+            from src.execution.diagnostics_engine import VassalOpsMainDirectorAgent
+            director = VassalOpsMainDirectorAgent()
+            return director.run_agent_health_check()
+            
+        # Intercept and trigger the automated regression proving bench
+        elif "regression" in cleaned or "verify patch" in cleaned or "run test" in cleaned:
+            from src.execution.regression_tester import VassalOpsRegressionTester
+            tester = VassalOpsRegressionTester()
+            report = tester.prove_proposed_fix("Calibrate coordinate clipping boundaries and inject safety latency padding")
+            
+            output = "### VassalOps Proving & Regression Bench Report\n"
+            output += f"- **Verification Result:** {'✅ PASS - Safe to Merge' if report['success'] else '❌ FAIL - Regressions Detected'}\n"
+            output += f"- **Benchmark Accuracy Score:** {report['score']}\n\n"
+            output += "#### Executed Test Cases:\n"
+            for item in report["detailed_run"]:
+                output += f"- `{item['case_id']}`: **{item['status']}**\n"
+            return output
+            
+        # Intercept and trigger the newly added advanced automated sleep-time memory loop
+        elif "sleep" in cleaned or "optimize memory" in cleaned or "update memory" in cleaned:
+            from src.execution.diagnostics_engine import VassalOpsMainDirectorAgent
+            director = VassalOpsMainDirectorAgent()
+            result_msg = director.execute_sleeptime_compute()
+            
+            output = "### VassalOps Sleep-Time Compute Active\n"
+            output += f"- **Trace Target:** Meta-inspecting previous internal framework execution steps.\n"
+            output += f"- **Loop Status:** {result_msg}\n\n"
+            output += "💡 *Notice: The long-term preference directives inside `storage/agent.md` have been updated dynamically based on system experience graphs.*"
+            return output
+            
         try:
             print(f"[UI Input Received] processing: {user_input}")
             initial_state = {
@@ -186,8 +220,5 @@ if __name__ == "__main__":
         text_select=True,
         js_api=api_bridge
     )
-    
-    # Pass the absolute path to your custom icon file directly inside the start function loop
-    icon_target = os.path.abspath("storage/dashboard/vassal_icon.ico")
-    webview.start(icon=icon_target)
-
+    window.icon = os.path.abspath("storage/dashboard/vassal_icon.png")
+    webview.start()
