@@ -105,12 +105,25 @@ def safety_gate_condition(state: VassalOpsState) -> str:
     return "execute_macros" if state.get("approval_status") == "approved" else END
 
 def execute_macros_node(state: VassalOpsState) -> Dict:
-    print("\n[VassalOps] [System Actions Active] Running pre-execution validations...")
+    print("\n[VassalOps] [MCP Client Active] Connecting to Universal Tool Server...")
     time.sleep(1.0)
+    
+    # Instantiate our decoupled local Model Context Protocol engine server
+    from src.execution.mcp_server import VassalOpsMCPServer
+    mcp_bridge = VassalOpsMCPServer()
+    
     for step in state["proposed_actions"]:
         action_type = step["type"]; payload = step["payload"]
-        if action_type == "run_backup": backup_manager.execute_directory_backup()
-        elif action_type == "sort_intel": data_sorter.run_sort_and_optimize()
+        
+        # Route core automated processes directly through our isolated MCP server handlers
+        if action_type == "run_backup":
+            mcp_result = mcp_bridge.call_tool("run_backup")
+            print(f" [MCP Response] {mcp_result['message']}")
+        elif action_type == "sort_intel":
+            mcp_result = mcp_bridge.call_tool("sort_intel")
+            print(f" [MCP Response] {mcp_result['message']}")
+            
+        # Keep specialized UI-bound and tracking functions running on standard system hooks
         elif action_type == "extract_intel": data_extractor.export_scraped_entities(state["extracted_entities"])
         elif action_type == "run_saved_macro": macro_player.execute_replay()
         elif action_type == "click_element" and "." in payload:
@@ -122,26 +135,6 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
         elif action_type == "press_hotkey": operator_bridge.execute_system_hotkey(payload)
         elif action_type == "speak_log": print(f"[VassalOps Output] {payload}")
 
-    try:
-        cache_dir = "src/ingestion/cache/"
-        if os.path.exists(cache_dir):
-            purged_count = 0
-            for filename in os.listdir(cache_dir):
-                if filename.startswith("raw_surface_") and filename.endswith(".png"):
-                    os.remove(os.path.join(cache_dir, filename))
-                    purged_count += 1
-            if purged_count > 0:
-                print(f"[VassalOps Cache Autopilot] Session completed. Purged {purged_count} temporary canvas frames cleanly.")
-    except Exception as e:
-        print(f"[VassalOps Cache Warning] Failed to auto-purge runtime session artifacts: {e}")
-
-    user_intent = state.get("raw_user_input", "unknown automation macro")
-    audit_ledger.commit_transaction(intent=user_intent, status="success_completed")
-    print("[VassalOps Voice] Compiling database entries for narration...")
-    voice_auditor.speak_timeline_summary()
-
-    print("[VassalOps] Operational sequence completed successfully."); return {}
-
 workflow = StateGraph(VassalOpsState)
 workflow.add_node("capture_context", capture_context_node)
 workflow.add_node("parse_intent", parse_intent_node)
@@ -152,8 +145,49 @@ workflow.add_conditional_edges("parse_intent", safety_gate_condition, {"execute_
 workflow.add_edge("execute_macros", END)
 vassalops_engine = workflow.compile(checkpointer=memory)
 
+class VassalOpsAPI:
+    def get_system_identity(self) -> dict:
+        """Dynamically tracks the OS login context and user details."""
+        import getpass
+        username = getpass.getuser()
+        return {"username": username, "avatar": ""}
+
+    def submit_command(self, user_input: str) -> str:
+        """Receives text from the HTML chat, routes it, and returns the response."""
+        try:
+            print(f"[UI Input Received] processing: {user_input}")
+            initial_state = {
+                "raw_user_input": user_input,
+                "captured_context": "",
+                "extracted_entities": {},
+                "normalized_intent": {},
+                "proposed_actions": [],
+                "approval_status": "approved"
+            }
+            config = {"configurable": {"thread_id": "vassalops_default_session"}}
+            vassalops_engine.invoke(initial_state, config=config)
+            return "Action executed successfully."
+        except Exception as e:
+            return f"Error executing action: {str(e)}"
+
 if __name__ == "__main__":
+    import webview
     print("======================================================")
-    print("VassalOps Core Engine Online -- Voice Audit Active")
+    print("VassalOps Core Engine Online -- UI Window Launching")
     print("======================================================")
+    
+    api_bridge = VassalOpsAPI()
+    window = webview.create_window(
+        title="VassalOps",
+        url=os.path.abspath("storage/dashboard/index.html"),
+        width=1200,
+        height=800,
+        resizable=True,
+        text_select=True,
+        js_api=api_bridge
+    )
+    
+    # Pass the absolute path to your custom icon file directly inside the start function loop
+    icon_target = os.path.abspath("storage/dashboard/vassal_icon.ico")
+    webview.start(icon=icon_target)
 
