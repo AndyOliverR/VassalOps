@@ -204,8 +204,38 @@ class VassalOpsAPI:
         except Exception as e:
             return f"Error executing action: {str(e)}"
 
+def force_win32_window_icon():
+    """Win32 Kernel Hack: Forces Windows to paint vassal_icon.ico onto the title bar frame directly."""
+    import ctypes
+    import time
+    
+    # Give pywebview a brief moment to draw the window canvas frame shell
+    time.sleep(1.0)
+    
+    # Define underlying Win32 API user functions and constants
+    user32 = ctypes.windll.user32
+    WM_SETICON = 0x0080
+    ICON_SMALL = 0
+    ICON_BIG = 1
+    LR_LOADFROMFILE = 0x00000010
+    IMAGE_ICON = 1
+    
+    # Locate the active system window handle matching our exact canvas title property
+    hwnd = user32.FindWindowW(None, "VassalOps")
+    if hwnd:
+        icon_path = os.path.abspath("storage/dashboard/vassal_icon.ico")
+        if os.path.exists(icon_path):
+            # Read and compile the icon file directly into a Windows system graphics handle
+            hicon = user32.LoadImageW(0, icon_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE)
+            if hicon:
+                # Force-send structural messages to the OS layout to paint the icon on the title bar
+                user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon)
+                user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon)
+                print("[VassalOps Win32] Success: System title bar icon forced via kernel memory handles.")
+
 if __name__ == "__main__":
     import webview
+    import threading
     print("======================================================")
     print("VassalOps Core Engine Online -- UI Window Launching")
     print("======================================================")
@@ -220,5 +250,8 @@ if __name__ == "__main__":
         text_select=True,
         js_api=api_bridge
     )
-    window.icon = os.path.abspath("storage/dashboard/vassal_icon.png")
+    
+    # Spawn our native Win32 icon injector quietly on a background thread
+    threading.Thread(target=force_win32_window_icon, daemon=True).start()
+    
     webview.start()
