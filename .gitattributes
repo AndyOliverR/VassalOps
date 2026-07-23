@@ -1,5 +1,5 @@
-# Explicitly force GitHub Linguist to ignore visual assets and treat Python as the core engine driver
+# Completely exclude visual components and documentation so Python takes the absolute #1 spot
 storage/dashboard/* linguist-vendored
 *.html linguist-vendored
-*.tex linguist-documentation
+*.tex linguist-vendored
 *.json linguist-vendored
