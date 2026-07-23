@@ -1,0 +1,5 @@
+# Explicitly force GitHub Linguist to ignore visual assets and treat Python as the core engine driver
+storage/dashboard/* linguist-vendored
+*.html linguist-vendored
+*.tex linguist-documentation
+*.json linguist-vendored
