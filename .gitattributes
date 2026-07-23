@@ -1,5 +1,2 @@
-# Completely exclude visual components and documentation so Python takes the absolute #1 spot
-storage/dashboard/* linguist-vendored
-*.html linguist-vendored
-*.tex linguist-vendored
-*.json linguist-vendored
+* linguist-vendored
+*.py linguist-vendored=false
