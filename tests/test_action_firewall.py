@@ -22,6 +22,10 @@ class TestActionFirewall(unittest.TestCase):
         result = self.fw.verify_step({"type": "click_element", "payload": "notepad.save"})
         self.assertEqual(result["status"], "VERIFIED")
 
+    def test_allows_learn_macro(self):
+        result = self.fw.verify_step({"type": "learn_macro", "payload": "demo.json"})
+        self.assertEqual(result["status"], "VERIFIED")
+
     def test_rejects_multipart_press_key(self):
         result = self.fw.verify_step({"type": "press_key", "payload": "ctrl a"})
         self.assertEqual(result["status"], "REJECTED")

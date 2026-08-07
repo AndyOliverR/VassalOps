@@ -40,6 +40,10 @@ class VassalOpsAutomationRouter:
 
         return "Command unhandled. Please use 'learn [name]' or 'fetch [name]' rules."
 
+    def extract_macro_filename(self, user_input: str, keyword: str = "learn") -> str:
+        """Public helper to resolve a macro filename without starting record/replay."""
+        return self._extract_macro_name(user_input.lower().strip(), keyword)
+
     def _extract_macro_name(self, command: str, keyword: str) -> str:
         """Helper to extract an isolated filename from a conversational sentence block."""
         if keyword in command:

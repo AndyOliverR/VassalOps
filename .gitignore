@@ -6,7 +6,13 @@
 build/
 dist/
 storage/*.json
+storage/launch.log
+storage/app_stdout.log
+storage/app_stderr.log
+storage/_dep_check.py
 .env
 .venv/
 venv/
 *.egg-info/
+
+src/ingestion/cache/

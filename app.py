@@ -20,9 +20,33 @@ from src.execution.audit_ledger import VassalOpsAuditLedger
 from src.execution.macro_orchestrator import VassalOpsAutomationRouter
 from src.execution.action_firewall import VassalOpsActionFirewall
 from src.ingestion.secret_redactor import redact_secrets
+from src.execution.macro_recorder import VassalOpsMacroRecorder
 
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.05
+
+def load_runtime_config() -> dict:
+    """Reads model host/port/name from config.json with safe defaults."""
+    defaults = {
+        "active_model": "llama3",
+        "host_address": "127.0.0.1",
+        "port_mapping": 11434,
+    }
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        model_cfg = data.get("model_configuration", {})
+        return {
+            "active_model": model_cfg.get("active_model", defaults["active_model"]),
+            "host_address": model_cfg.get("host_address", defaults["host_address"]),
+            "port_mapping": int(model_cfg.get("port_mapping", defaults["port_mapping"])),
+        }
+    except Exception as e:
+        print(f"[VassalOps] Warning: could not load config.json ({e}); using defaults.")
+        return defaults
+
+RUNTIME_CONFIG = load_runtime_config()
 
 class VassalOpsState(TypedDict):
     raw_user_input: str; captured_context: str; extracted_entities: Dict
@@ -35,7 +59,7 @@ memory = SqliteSaver(db_connection)
 from src.execution.ollama_guard import VassalOpsOllamaGuard
 
 # Initialize and verify local server node integrity before state graph assembly
-ollama_guard = VassalOpsOllamaGuard()
+ollama_guard = VassalOpsOllamaGuard(port=RUNTIME_CONFIG["port_mapping"])
 ollama_guard.ensure_service_active()
 
 screen_layer = ScreenContextLayer()
@@ -72,37 +96,70 @@ def capture_context_node(state: VassalOpsState) -> Dict:
 def parse_intent_node(state: VassalOpsState) -> Dict:
     print("[VassalOps] [Brain Active] Fetching local source context and processing Ollama instruction traces...")
     
-    # Intercept keyword macro workflows ('learn' / 'fetch') early to bypass LLM processing latency
     user_raw = state['raw_user_input'].lower().strip()
-    if "learn" in user_raw or "fetch" in user_raw or "run macro" in user_raw:
-        router_response = automation_router.route_command(state['raw_user_input'])
-        steps = [{"type": "speak_log", "payload": router_response}]
-        structured_steps = {'steps': steps}
-        return {"normalized_intent": structured_steps, "proposed_actions": steps, "approval_status": "pending"}
 
-    live_codebase_context = workspace_aggregator.scan_workspace_text()
-    ollama_url = "http://localhost:11434/api/generate"
-    system_prompt = "You are VassalOps, a seamless extension of the human mind. Convert the instruction directly into an optimization automation directive structure. Keep conversational outputs brief, direct, and simple. Do not hallucinate historical traces."
+    # Local date/time answers without model round-trip
+    if any(k in user_raw for k in ("what date", "what's the date", "whats the date", "what time", "what's the time", "whats the time", "current date", "current time")):
+        import datetime
+        now = datetime.datetime.now().strftime("%A, %B %d, %Y %I:%M %p")
+        steps = [{"type": "speak_log", "payload": f"The current date and time is {now}."}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    # Propose learn/fetch only — side effects run after Approve in execute_macros_node
+    if "learn" in user_raw:
+        macro_name = automation_router.extract_macro_filename(state["raw_user_input"], "learn")
+        steps = [
+            {"type": "learn_macro", "payload": macro_name},
+            {"type": "speak_log", "payload": f"Ready to record macro '{macro_name}'. After Approve, perform the task then press Escape to stop."},
+        ]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if "fetch" in user_raw or "run macro" in user_raw:
+        keyword = "fetch" if "fetch" in user_raw else "run macro"
+        macro_name = automation_router.extract_macro_filename(state["raw_user_input"], "fetch" if "fetch" in user_raw else "run")
+        if keyword == "run macro" and macro_name == "recorded_macro.json":
+            # Prefer text after "run macro"
+            macro_name = automation_router.extract_macro_filename(state["raw_user_input"].lower().replace("run macro", "fetch", 1), "fetch")
+        steps = [
+            {"type": "run_saved_macro", "payload": macro_name},
+            {"type": "speak_log", "payload": f"Ready to replay macro '{macro_name}' after you Approve."},
+        ]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    host = RUNTIME_CONFIG["host_address"]
+    port = RUNTIME_CONFIG["port_mapping"]
+    model_name = RUNTIME_CONFIG["active_model"]
+    ollama_url = f"http://{host}:{port}/api/generate"
+    system_prompt = (
+        "You are VassalOps, a desktop automation planner. "
+        "Return ONLY JSON with a top-level 'steps' array. Each step is "
+        "{\"type\": one of type_text|press_key|press_hotkey|click_element|speak_log|run_backup|sort_intel|extract_intel, "
+        "\"payload\": string}. "
+        "For simple questions (facts, greetings), use a single speak_log step. "
+        "Keep payloads brief. Do not invent click_element targets you are unsure about."
+    )
     safe_context = redact_secrets(state.get("captured_context") or "")
     safe_user_input = redact_secrets(state.get("raw_user_input") or "")
     prompt_payload = f"Sensed Screen OCR Layout: {safe_context}\nUser Intent Input: {safe_user_input}"
     structured_steps = None
     
     try:
-        payload = {"model": "llama3", "prompt": f"{system_prompt}\n\n{prompt_payload}", "stream": False, "format": "json"}
-        response = requests.post(ollama_url, json=payload, timeout=15).json()
+        payload = {"model": model_name, "prompt": f"{system_prompt}\n\n{prompt_payload}", "stream": False, "format": "json"}
+        response = requests.post(ollama_url, json=payload, timeout=60).json()
         raw_response = response.get('response', '{}').strip()
         parsed_json = json.loads(raw_response)
         if isinstance(parsed_json, dict) and "steps" in parsed_json and isinstance(parsed_json["steps"], list):
             structured_steps = parsed_json
-            print("[VassalOps Diagnostic] Ollama response schema validated successfully.")
+            print(f"[VassalOps Diagnostic] Ollama model '{model_name}' response schema validated.")
         else:
             print("[VassalOps Diagnostic Warning] Malformed JSON fields returned from model. Activating recovery rules...")
     except Exception as e:
         print(f"[VassalOps Diagnostic Error] JSON validation trace hit a processing hurdle: {e}")
+        steps = [{"type": "speak_log", "payload": f"I could not reach the local model '{model_name}'. Check Ollama is running and config.json active_model is installed."}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
         
     if not structured_steps:
-        steps = [{"type": "type_text", "payload": "echo Hello! How can I help you automate your PC today?"}]
+        steps = [{"type": "speak_log", "payload": "Hello! How can I help you automate your PC today?"}]
         structured_steps = {'steps': steps}
         
     return {"normalized_intent": structured_steps, "proposed_actions": structured_steps.get("steps", []), "approval_status": "pending"}
@@ -112,7 +169,7 @@ def safety_gate_condition(state: VassalOpsState) -> str:
 
 def execute_macros_node(state: VassalOpsState) -> Dict:
     print("\n[VassalOps] [ToolRouter] Dispatching approved automation steps...")
-    time.sleep(1.0)
+    time.sleep(0.2)
     
     from src.execution.tool_router import VassalOpsToolRouter
     tool_router = VassalOpsToolRouter()
@@ -123,7 +180,7 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
             print(f" [Firewall] Rejected step: {verdict['reason']}")
             continue
 
-        action_type = step["type"]; payload = step["payload"]
+        action_type = step["type"]; payload = step.get("payload", "")
         
         if action_type == "run_backup":
             mcp_result = tool_router.call_tool("run_backup")
@@ -131,12 +188,17 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
         elif action_type == "sort_intel":
             mcp_result = tool_router.call_tool("sort_intel")
             print(f" [ToolRouter] {mcp_result['message']}")
-            
-        # Keep specialized UI-bound and tracking functions running on standard system hooks
+        elif action_type == "learn_macro":
+            recorder = VassalOpsMacroRecorder(output_filename=str(payload))
+            recorder.start_recording()
+            print(f" [Macro] Recording started for {payload}")
+        elif action_type == "run_saved_macro":
+            player = VassalOpsMacroPlayer(target_filename=str(payload))
+            ok = player.execute_replay()
+            print(f" [Macro] Replay {'succeeded' if ok else 'failed'} for {payload}")
         elif action_type == "extract_intel": data_extractor.export_scraped_entities(state["extracted_entities"])
-        elif action_type == "run_saved_macro": macro_player.execute_replay()
-        elif action_type == "click_element" and "." in payload:
-            app_key, element_key = payload.split(".", 1)
+        elif action_type == "click_element" and "." in str(payload):
+            app_key, element_key = str(payload).split(".", 1)
             if app_key not in operator_bridge.layouts: profiler.profile_active_window(app_key); operator_bridge.layouts = operator_bridge._load_layouts()
             bootstrapper.ensure_application_running(app_key); operator_bridge.execute_targeted_click(app_key, element_key)
         elif action_type == "type_text": operator_bridge.execute_text_input(payload, press_enter=False)

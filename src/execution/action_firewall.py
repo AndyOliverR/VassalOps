@@ -8,6 +8,7 @@ ALLOWED_ACTION_TYPES: Set[str] = {
     "sort_intel",
     "extract_intel",
     "run_saved_macro",
+    "learn_macro",
     "click_element",
     "type_text",
     "press_key",
@@ -38,7 +39,7 @@ class VassalOpsActionFirewall:
             }
 
         payload = step.get("payload", "")
-        if action_type in ("type_text", "press_key", "press_hotkey", "click_element", "speak_log"):
+        if action_type in ("type_text", "press_key", "press_hotkey", "click_element", "speak_log", "learn_macro", "run_saved_macro"):
             if payload is None or (isinstance(payload, str) and not payload.strip() and action_type != "speak_log"):
                 return {"status": "REJECTED", "reason": f"Action '{action_type}' requires a non-empty payload."}
 

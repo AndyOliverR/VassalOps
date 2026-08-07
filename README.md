@@ -37,29 +37,35 @@ capture_context -> parse_intent -> [human approve] -> execute_macros
 
 ---
 
-## Quick start
+## Quick start (lay user)
 
-### Prerequisites
+### One-time prerequisites
+1. Install [Python 3.11+](https://www.python.org/downloads/) (check **Add python.exe to PATH**).
+2. Install [Ollama](https://ollama.com/) and ensure at least one model is available (this repo’s `config.json` defaults to `gpt-oss:120b-cloud` — change `model_configuration.active_model` to any model you have, e.g. `llama3`).
 
-- Python 3.11+
-- [Ollama](https://ollama.com/) installed locally
-- Windows (primary target)
+### Install & run
+1. Clone or unzip VassalOps onto the PC (example: `C:\VassalOps`).
+2. **Double-click `bootstrap_and_run.bat`** (or the Desktop **VassalOps** shortcut).
+3. Wait while it quietly checks Python packages, starts Ollama if needed, verifies the model, then opens the chat window.
+4. Type an instruction → review the proposed steps → **Approve** or **Reject**.
 
-```bash
-pip install -r requirements.txt
-```
+If something fails, read `storage\launch.log` (and any MessageBox). Do **not** use the old `VassalOpsLaunch.exe` stub — it is not a real installer.
 
-### Run
+### What you can ask
+- Simple facts: “what’s the date?”
+- Desktop help via the local model (clicks/typing only after Approve)
+- **Learn a task:** `learn my_login` → Approve → perform the task → press Escape to stop recording
+- **Replay:** `fetch my_login` → Approve
 
+### Developer run
 ```bash
 git clone https://github.com/AndyOliverR/VassalOps.git
 cd VassalOps
+pip install -r requirements.txt
 python app.py
 ```
 
-Or use `launch_engine.bat` / `launch_vassalops.bat`. The engine launcher starts the local UI only; it does **not** open an HTTP dashboard or the WebSocket broker on the LAN.
-
-### Optional broker
+`launch_engine.bat` also goes through the same bootstrap path. Optional broker:
 
 ```bash
 python src/communication/socket_broker.py
