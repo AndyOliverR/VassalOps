@@ -1,0 +1,7 @@
+{
+  "workday": [],
+  "policy": {
+    "stop_on_failure": true,
+    "require_approval": true
+  }
+}

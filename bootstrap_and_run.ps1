@@ -140,9 +140,35 @@ try {
         }
         $tags = Invoke-RestMethod -Uri "http://${hostAddr}:${port}/api/tags" -TimeoutSec 5
         $names = @($tags.models | ForEach-Object { $_.name })
-        if ($names -notcontains $activeModel) {
+    }
+    if ($names -notcontains $activeModel) {
+        $fallbacks = @("llama3.2", "llama3", "phi3", "qwen2.5")
+        $chosen = $null
+        foreach ($fb in $fallbacks) {
+            if ($names -contains $fb) { $chosen = $fb; break }
+            if ($ollamaCmd) {
+                Write-Log "Trying fallback model pull: $fb"
+                & $ollamaCmd.Source pull $fb 2>&1 | ForEach-Object { Write-Log $_ }
+                $tags = Invoke-RestMethod -Uri "http://${hostAddr}:${port}/api/tags" -TimeoutSec 5
+                $names = @($tags.models | ForEach-Object { $_.name })
+                if ($names -contains $fb) { $chosen = $fb; break }
+            }
+        }
+        if (-not $chosen -and $names.Count -gt 0) { $chosen = [string]$names[0] }
+        if ($chosen) {
+            Write-Log "Using fallback model '$chosen' (configured '$activeModel' unavailable)."
+            $activeModel = $chosen
+            try {
+                $cfgObj = Get-Content $configPath -Raw | ConvertFrom-Json
+                $cfgObj.model_configuration.active_model = $chosen
+                ($cfgObj | ConvertTo-Json -Depth 8) | Set-Content -Path $configPath -Encoding UTF8
+                Write-Log "Updated config.json active_model -> $chosen"
+            } catch {
+                Write-Log "Warning: could not persist fallback model to config.json"
+            }
+        } else {
             $list = if ($names.Count) { $names -join ", " } else { "(none)" }
-            Show-Error "Configured model '$activeModel' is not available.`nInstalled: $list`nUpdate config.json model_configuration.active_model or run: ollama pull $activeModel"
+            Show-Error "No usable Ollama model found.`nInstalled: $list`nRun: ollama pull llama3.2"
             exit 1
         }
     }

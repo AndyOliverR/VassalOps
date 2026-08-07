@@ -39,23 +39,52 @@ capture_context -> parse_intent -> [human approve] -> execute_macros
 
 ## Quick start (lay user)
 
+**Tagline:** *Your PC’s workday — taught by you, approved by you, run locally.*
+
 ### One-time prerequisites
 1. Install [Python 3.11+](https://www.python.org/downloads/) (check **Add python.exe to PATH**).
-2. Install [Ollama](https://ollama.com/) and ensure at least one model is available (this repo’s `config.json` defaults to `gpt-oss:120b-cloud` — change `model_configuration.active_model` to any model you have, e.g. `llama3`).
+2. Install [Ollama](https://ollama.com/).
 
 ### Install & run
 1. Clone or unzip VassalOps onto the PC (example: `C:\VassalOps`).
-2. **Double-click `bootstrap_and_run.bat`** (or the Desktop **VassalOps** shortcut).
-3. Wait while it quietly checks Python packages, starts Ollama if needed, verifies the model, then opens the chat window.
-4. Type an instruction → review the proposed steps → **Approve** or **Reject**.
+2. **Right-click `install_vassalops.ps1` → Run with PowerShell** (once). It installs Python packages, checks Ollama, pulls a usable model if needed, and creates a Desktop shortcut.
+3. Or double-click **`bootstrap_and_run.bat`** / **`VassalOps.exe`** (build with `packaging\build_launcher.ps1`).
+4. Type an instruction → review the **plain-English** plan → **Approve** or **Reject**. Watch the progress panel; use **Stop** or **Continue** if it pauses (MFA / missing window).
 
-If something fails, read `storage\launch.log` (and any MessageBox). Do **not** use the old `VassalOpsLaunch.exe` stub — it is not a real installer.
+If something fails, read `storage\launch.log`. Prefer `VassalOps.exe` from `packaging\build_launcher.ps1` over the old stub `VassalOpsLaunch.exe`.
 
 ### What you can ask
 - Simple facts: “what’s the date?”
 - Desktop help via the local model (clicks/typing only after Approve)
-- **Learn a task:** `learn my_login` → Approve → perform the task → press Escape to stop recording
-- **Replay:** `fetch my_login` → Approve
+- **60-second demo:** `import demo pack` → `run duty demo notepad hello` → Approve
+- **Learn a one-off macro:** `learn my_login` → Approve → perform the task → press Escape
+- **Replay macro:** `fetch my_login` → Approve
+
+### Train your workday (Daily Duties)
+Goal: show VassalOps what you do once, then run those duties each morning with one Approve.
+
+1. `teach morning email` → **Approve** → do the email check yourself → press **Escape** to stop recording.  
+   (Keystrokes are recorded — avoid typing passwords when possible.)
+2. Repeat for other duties (`teach sap check`, etc.).
+3. `build my workday` — schedules all taught duties into today’s playlist.
+4. Open **Daily Duties** in the UI (or say `my workday`) → check items → **Approve today's run**.
+5. Or chat: `run my workday` → Approve (stops on first failure; pauses if a window/landmark is missing).
+
+Replay prefers **window-title focus** (and optional OCR landmarks) before raw coordinates. If MFA/CAPTCHA blocks a step, VassalOps **pauses** and asks you to Continue.
+
+Optional weekday auto-open (briefing only, never silent autopilot):
+
+```bat
+register_morning_briefing.bat
+```
+
+Duties live in `storage/duties/`. Sample packs: `storage/duties/packs/`. This is **not** full unsupervised “become me” — UI drift, MFA, and CAPTCHAs still need you.
+
+### Build the desktop launcher EXE
+```bat
+powershell -ExecutionPolicy Bypass -File packaging\build_launcher.ps1
+```
+Produces `VassalOps.exe` next to the repo (thin launcher that starts bootstrap).
 
 ### Developer run
 ```bash

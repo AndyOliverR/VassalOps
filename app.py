@@ -21,6 +21,12 @@ from src.execution.macro_orchestrator import VassalOpsAutomationRouter
 from src.execution.action_firewall import VassalOpsActionFirewall
 from src.ingestion.secret_redactor import redact_secrets
 from src.execution.macro_recorder import VassalOpsMacroRecorder
+from src.execution.duty_library import VassalOpsDutyLibrary, extract_duty_name_from_command
+from src.execution.daily_playlist import VassalOpsDailyPlaylist
+from src.execution.plan_narrator import narrate_proposed_actions
+from src.execution.run_controller import run_controller
+from src.execution.landmark_target import focus_window_by_title, find_text_on_screen
+import threading
 
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.05
@@ -76,6 +82,8 @@ workspace_aggregator = WorkspaceContextAggregator()
 audit_ledger = VassalOpsAuditLedger()
 automation_router = VassalOpsAutomationRouter()
 action_firewall = VassalOpsActionFirewall()
+duty_library = VassalOpsDutyLibrary()
+daily_playlist = VassalOpsDailyPlaylist(library=duty_library, ledger=audit_ledger)
 
 def capture_context_node(state: VassalOpsState) -> Dict:
     print("\n[VassalOps] [Eyes Active] Snapshotting screen and running OCR pattern trace matching...")
@@ -103,6 +111,61 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
         import datetime
         now = datetime.datetime.now().strftime("%A, %B %d, %Y %I:%M %p")
         steps = [{"type": "speak_log", "payload": f"The current date and time is {now}."}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    # Immediate read-only duty list (no approval needed for listing)
+    if "list duties" in user_raw or user_raw.strip() in ("duties", "show duties", "my duties"):
+        steps = [{"type": "speak_log", "payload": duty_library.format_duty_list()}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if "build my workday" in user_raw or "build workday" in user_raw:
+        data = daily_playlist.build_workday_from_all_duties()
+        names = [e.get("duty_id") for e in data.get("workday", [])]
+        msg = "Workday playlist rebuilt from taught duties:\n" + "\n".join(f"- {n}" for n in names) if names else "No duties to schedule. Teach one first: teach morning email"
+        steps = [{"type": "speak_log", "payload": msg}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if any(k in user_raw for k in ("today's duties", "todays duties", "daily duties", "show playlist", "my workday")):
+        briefing = daily_playlist.get_today_playlist()
+        if not briefing["items"]:
+            msg = "No workday playlist yet. Teach duties, then say: build my workday"
+        else:
+            lines = [f"Today's duties ({briefing['date']} {briefing['time']}):"]
+            for item in briefing["items"]:
+                due = "due" if item["due"] else f"after {item['after']}"
+                exists = "ok" if item["exists"] else "MISSING"
+                lines.append(f"- [{due}|{exists}] {item['name']} ({item['duty_id']}, {item['step_count']} steps)")
+            lines.append("Open Daily Duties panel or say: run my workday (then Approve).")
+            msg = "\n".join(lines)
+        steps = [{"type": "speak_log", "payload": msg}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if user_raw.startswith("teach ") or "teach duty" in user_raw or (user_raw.startswith("teach")):
+        duty_name = extract_duty_name_from_command(state["raw_user_input"], "teach")
+        steps = [
+            {"type": "teach_duty", "payload": duty_name},
+            {"type": "speak_log", "payload": (
+                f"Ready to TEACH duty '{duty_name}'. After Approve: perform the task, then press Escape. "
+                "WARNING: keystrokes (including passwords) will be recorded."
+            )},
+        ]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if user_raw.startswith("run duty") or "run duty " in user_raw:
+        duty_name = extract_duty_name_from_command(state["raw_user_input"], "run duty")
+        from src.execution.duty_library import _slugify
+        duty_id = _slugify(duty_name)
+        steps = [
+            {"type": "run_duty", "payload": duty_id},
+            {"type": "speak_log", "payload": f"Ready to run duty '{duty_id}' after you Approve."},
+        ]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if any(k in user_raw for k in ("run my workday", "run workday", "run playlist", "perform my daily", "work for me")):
+        steps = [
+            {"type": "run_playlist", "payload": "today"},
+            {"type": "speak_log", "payload": "Ready to run today's duty playlist after you Approve. Stops on first failure."},
+        ]
         return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
 
     # Propose learn/fetch only — side effects run after Approve in execute_macros_node
@@ -192,6 +255,50 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
             recorder = VassalOpsMacroRecorder(output_filename=str(payload))
             recorder.start_recording()
             print(f" [Macro] Recording started for {payload}")
+        elif action_type == "teach_duty":
+            taught = duty_library.start_teach(str(payload))
+            daily_playlist.add_duty(taught["id"])
+            print(f" [Duty] Taught and added to playlist: {taught['id']}")
+        elif action_type == "run_duty":
+            outcome = duty_library.run_duty(str(payload))
+            print(f" [Duty] Run {payload}: {outcome}")
+            if not outcome.get("ok"):
+                print(f" [Duty] FAILED: {outcome.get('error')}")
+        elif action_type == "run_playlist":
+            report = daily_playlist.run_playlist()
+            print(f" [Playlist] {report}")
+        elif action_type == "focus_window":
+            result = focus_window_by_title(str(payload))
+            print(f" [Landmark] focus_window: {result}")
+            if not result.get("ok"):
+                run_controller.enter_stuck(
+                    result.get("error") or f"Window “{payload}” not found.",
+                    "Open the window, then Continue in VassalOps.",
+                )
+                decision = run_controller.wait_while_paused()
+                if decision == "stop":
+                    print(" [Landmark] Stopped while waiting for window.")
+                    break
+                if decision == "continue":
+                    focus_window_by_title(str(payload))
+        elif action_type == "click_landmark":
+            pt = find_text_on_screen(str(payload))
+            if not pt:
+                run_controller.enter_stuck(
+                    f"Could not find on-screen text “{payload}”.",
+                    "Make the text visible, then Continue to retry.",
+                )
+                decision = run_controller.wait_while_paused()
+                if decision == "stop":
+                    break
+                if decision == "skip":
+                    continue
+                pt = find_text_on_screen(str(payload))
+            if pt:
+                pyautogui.click(pt[0], pt[1])
+                print(f" [Landmark] click_landmark at {pt}")
+            else:
+                print(f" [Landmark] click_landmark failed for {payload}")
         elif action_type == "run_saved_macro":
             player = VassalOpsMacroPlayer(target_filename=str(payload))
             ok = player.execute_replay()
@@ -227,6 +334,41 @@ class VassalOpsAPI:
     def submit_command(self, user_input: str) -> str:
         """Receives text from the HTML chat, routes it, and returns the response."""
         cleaned = user_input.lower().strip()
+
+        # Instant read-only duty helpers (no bot-sitter needed)
+        if "list duties" in cleaned or cleaned in ("duties", "show duties", "my duties"):
+            return duty_library.format_duty_list()
+        if "import demo" in cleaned or "import pack" in cleaned or cleaned in ("demo pack", "import demo pack"):
+            result = duty_library.import_demo_packs()
+            if not result.get("ok"):
+                return f"Could not import demo packs: {result.get('error')}"
+            ids = result.get("imported") or []
+            if not ids:
+                return "No demo pack JSON files found under storage/duties/packs/."
+            daily_playlist.build_workday_from_all_duties()
+            return (
+                "Imported demo duties:\n"
+                + "\n".join(f"- {i}" for i in ids)
+                + "\n\nTry: run duty demo notepad hello (then Approve).\n"
+                "Tagline: Your PC's workday — taught by you, approved by you, run locally."
+            )
+        if "build my workday" in cleaned or "build workday" in cleaned:
+            data = daily_playlist.build_workday_from_all_duties()
+            names = [e.get("duty_id") for e in data.get("workday", [])]
+            if not names:
+                return "No duties to schedule. Teach one first: teach morning email"
+            return "Workday playlist rebuilt:\n" + "\n".join(f"- {n}" for n in names)
+        if any(k in cleaned for k in ("today's duties", "todays duties", "daily duties", "show playlist", "my workday")):
+            briefing = daily_playlist.get_today_playlist()
+            if not briefing["items"]:
+                return "No workday playlist yet. Teach duties, then say: build my workday"
+            lines = [f"Today's duties ({briefing['date']} {briefing['time']}):"]
+            for item in briefing["items"]:
+                due = "due" if item["due"] else f"after {item['after']}"
+                exists = "ok" if item["exists"] else "MISSING"
+                lines.append(f"- [{due}|{exists}] {item['name']} ({item['duty_id']}, {item['step_count']} steps)")
+            lines.append("Use the Daily Duties panel or say: run my workday")
+            return "\n".join(lines)
         
         # Intercept and route conversational ambient diagnostic questions instantly
         if "health" in cleaned or "optimize system" in cleaned or "check system" in cleaned:
@@ -275,11 +417,13 @@ class VassalOpsAPI:
             vassalops_engine.invoke(initial_state, config=config)
             current_state = vassalops_engine.get_state(config).values
             proposed = current_state.get("proposed_actions") or []
+            readable = narrate_proposed_actions(proposed)
             return json.dumps({
                 "status": "pending_approval",
                 "thread_id": thread_id,
                 "proposed_actions": proposed,
-                "message": "Review the proposed steps, then Approve or Reject."
+                "readable_steps": readable,
+                "message": "Review the plan in plain English, then Approve or Reject."
             })
         except Exception as e:
             return f"Error executing action: {str(e)}"
@@ -302,11 +446,86 @@ class VassalOpsAPI:
                 return "Plan rejected. No desktop actions were executed."
 
             current_state["approval_status"] = "approved"
-            print("[VassalOps] Plan approved by bot-sitter. Executing macros...")
-            execute_macros_node(current_state)
-            return "Action executed successfully."
+            readable = narrate_proposed_actions(proposed)
+            run_controller.reset_for_run(readable, phase="approved_plan")
+
+            def _run():
+                try:
+                    print("[VassalOps] Plan approved by bot-sitter. Executing macros...")
+                    execute_macros_node(current_state)
+                    snap = run_controller.snapshot()
+                    if snap.get("status") not in ("done", "stopped"):
+                        run_controller.finish(True)
+                except Exception as exc:
+                    run_controller.finish(False, str(exc))
+
+            threading.Thread(target=_run, daemon=True).start()
+            return "Execution started. Watch the progress panel — use Stop if needed."
         except Exception as e:
             return f"Error confirming plan: {str(e)}"
+
+    def get_run_progress(self) -> dict:
+        """Live progress for the dashboard progress panel."""
+        return run_controller.snapshot()
+
+    def stop_run(self) -> str:
+        run_controller.request_stop()
+        return "Stop requested. Automation will halt at the next safe point."
+
+    def continue_run(self) -> str:
+        run_controller.continue_run()
+        return "Continuing after pause."
+
+    def skip_stuck_step(self) -> str:
+        run_controller.skip_stuck_step()
+        return "Skipping the stuck step."
+
+    def list_duties(self) -> list:
+        """Returns taught duty summaries for the Daily Duties panel."""
+        return duty_library.list_duties()
+
+    def get_today_playlist(self) -> dict:
+        """Morning briefing payload for the dashboard."""
+        return daily_playlist.get_today_playlist()
+
+    def confirm_playlist(self, approved: bool, duty_ids: list = None) -> str:
+        """Bot-sitter gate for running one or more playlist duties sequentially."""
+        if not approved:
+            return "Playlist run cancelled. No duties were executed."
+        ids = duty_ids if isinstance(duty_ids, list) else None
+
+        def _run():
+            try:
+                report = daily_playlist.run_playlist(ids)
+                ok = bool(report.get("ok"))
+                err = ""
+                if report.get("stopped_early"):
+                    err = "Stopped early due to failure (work PC safety policy)."
+                snap = run_controller.snapshot()
+                if snap.get("status") not in ("done", "stopped"):
+                    run_controller.finish(ok, err)
+            except Exception as exc:
+                run_controller.finish(False, str(exc))
+
+        briefing = daily_playlist.get_today_playlist()
+        selected = ids or [i["duty_id"] for i in briefing.get("items", []) if i.get("exists")]
+        readable = [f"Run duty: {d}" for d in selected]
+        run_controller.reset_for_run(readable, phase="playlist")
+        threading.Thread(target=_run, daemon=True).start()
+        return "Playlist execution started. Watch progress — Approve already granted for this run."
+
+    def add_duty_to_playlist(self, duty_id: str, after: str = "09:00") -> dict:
+        """Adds/updates a duty on the workday playlist."""
+        daily_playlist.add_duty(duty_id, after=after)
+        return daily_playlist.get_today_playlist()
+
+    def import_demo_pack(self) -> str:
+        result = duty_library.import_demo_packs()
+        if not result.get("ok"):
+            return f"Import failed: {result.get('error')}"
+        ids = result.get("imported") or []
+        daily_playlist.build_workday_from_all_duties()
+        return "Imported: " + (", ".join(ids) if ids else "(none)")
 
 def force_win32_window_icon():
     """Win32 Kernel Hack: Forces Windows to paint vassal_icon.ico onto the title bar frame directly."""

@@ -5,6 +5,9 @@
 *.exe
 build/
 dist/
+packaging/build/
+packaging/dist/
+packaging/out/
 storage/*.json
 storage/launch.log
 storage/app_stdout.log

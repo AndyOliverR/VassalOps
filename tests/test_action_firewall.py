@@ -26,8 +26,13 @@ class TestActionFirewall(unittest.TestCase):
         result = self.fw.verify_step({"type": "learn_macro", "payload": "demo.json"})
         self.assertEqual(result["status"], "VERIFIED")
 
+    def test_allows_teach_and_playlist(self):
+        self.assertEqual(self.fw.verify_step({"type": "teach_duty", "payload": "email"} )["status"], "VERIFIED")
+        self.assertEqual(self.fw.verify_step({"type": "run_duty", "payload": "email"} )["status"], "VERIFIED")
+        self.assertEqual(self.fw.verify_step({"type": "run_playlist", "payload": "today"} )["status"], "VERIFIED")
+
     def test_rejects_multipart_press_key(self):
-        result = self.fw.verify_step({"type": "press_key", "payload": "ctrl a"})
+        result = self.fw.verify_step({"type": "press_key", "payload": "ctrl+c"})
         self.assertEqual(result["status"], "REJECTED")
 
 

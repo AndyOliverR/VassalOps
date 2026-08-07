@@ -9,11 +9,16 @@ ALLOWED_ACTION_TYPES: Set[str] = {
     "extract_intel",
     "run_saved_macro",
     "learn_macro",
+    "teach_duty",
+    "run_duty",
+    "run_playlist",
     "click_element",
     "type_text",
     "press_key",
     "press_hotkey",
     "speak_log",
+    "focus_window",
+    "click_landmark",
 }
 
 
@@ -39,14 +44,14 @@ class VassalOpsActionFirewall:
             }
 
         payload = step.get("payload", "")
-        if action_type in ("type_text", "press_key", "press_hotkey", "click_element", "speak_log", "learn_macro", "run_saved_macro"):
+        if action_type in ("type_text", "press_key", "press_hotkey", "click_element", "speak_log", "learn_macro", "run_saved_macro", "teach_duty", "run_duty", "focus_window", "click_landmark"):
             if payload is None or (isinstance(payload, str) and not payload.strip() and action_type != "speak_log"):
                 return {"status": "REJECTED", "reason": f"Action '{action_type}' requires a non-empty payload."}
 
         if action_type == "press_key":
             key = str(payload).strip()
-            if " " in key or len(key) > 32:
-                return {"status": "REJECTED", "reason": "press_key payload must be a single key token."}
+            if " " in key or "+" in key or len(key) > 32:
+                return {"status": "REJECTED", "reason": "press_key payload must be a single key token (use press_hotkey for combos)."}
 
         if action_type == "click_element":
             target = str(payload)

@@ -25,6 +25,18 @@ class VassalOpsMacroRecorder:
     def _get_elapsed_time(self) -> float:
         return round(time.time() - self.start_time, 2)
 
+    def _active_window_title(self) -> str:
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            hwnd = user32.GetForegroundWindow()
+            length = user32.GetWindowTextLengthW(hwnd)
+            buf = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buf, length + 1)
+            return buf.value or ""
+        except Exception:
+            return ""
+
     def on_click(self, x: int, y: int, button, pressed):
         """Callback that intercepts and tokenizes physical human click points."""
         if pressed:
@@ -33,7 +45,8 @@ class VassalOpsMacroRecorder:
                 "x": x,
                 "y": y,
                 "button": str(button),
-                "delay": self._get_elapsed_time()
+                "delay": self._get_elapsed_time(),
+                "window_title": self._active_window_title(),
             }
             print(f" [*] Logged Click: Button.{button} at ({x}, {y})")
             self.macro_steps.append(step)
