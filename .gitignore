@@ -1,3 +1,12 @@
 ﻿__pycache__/
 *.pyc
+.pytest_cache/
+*.db
+*.exe
+build/
+dist/
 storage/*.json
+.env
+.venv/
+venv/
+*.egg-info/

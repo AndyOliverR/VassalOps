@@ -18,6 +18,8 @@ from src.execution.backup_manager import VassalOpsBackupManager
 from src.ingestion.context_aggregator import WorkspaceContextAggregator
 from src.execution.audit_ledger import VassalOpsAuditLedger
 from src.execution.macro_orchestrator import VassalOpsAutomationRouter
+from src.execution.action_firewall import VassalOpsActionFirewall
+from src.ingestion.secret_redactor import redact_secrets
 
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.05
@@ -49,6 +51,7 @@ backup_manager = VassalOpsBackupManager()
 workspace_aggregator = WorkspaceContextAggregator()
 audit_ledger = VassalOpsAuditLedger()
 automation_router = VassalOpsAutomationRouter()
+action_firewall = VassalOpsActionFirewall()
 
 def capture_context_node(state: VassalOpsState) -> Dict:
     print("\n[VassalOps] [Eyes Active] Snapshotting screen and running OCR pattern trace matching...")
@@ -63,7 +66,8 @@ def capture_context_node(state: VassalOpsState) -> Dict:
         extracted_text = f"[OCR Fallback/Clipboard] {clipboard_text if clipboard_text else 'General UI Canvas Focus'}"
     
     scraped_entities = ocr_engine.extract_structural_entities(extracted_text)
-    return {"captured_context": f"OCR Visual Text Map: '{extracted_text}' | Frame Anchor: {cached_frame_path}", "extracted_entities": scraped_entities}
+    safe_text = redact_secrets(extracted_text)
+    return {"captured_context": f"OCR Visual Text Map: '{safe_text}' | Frame Anchor: {cached_frame_path}", "extracted_entities": scraped_entities}
 
 def parse_intent_node(state: VassalOpsState) -> Dict:
     print("[VassalOps] [Brain Active] Fetching local source context and processing Ollama instruction traces...")
@@ -74,12 +78,14 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
         router_response = automation_router.route_command(state['raw_user_input'])
         steps = [{"type": "speak_log", "payload": router_response}]
         structured_steps = {'steps': steps}
-        return {"normalized_intent": structured_steps, "proposed_actions": steps, "approval_status": "approved"}
+        return {"normalized_intent": structured_steps, "proposed_actions": steps, "approval_status": "pending"}
 
     live_codebase_context = workspace_aggregator.scan_workspace_text()
     ollama_url = "http://localhost:11434/api/generate"
     system_prompt = "You are VassalOps, a seamless extension of the human mind. Convert the instruction directly into an optimization automation directive structure. Keep conversational outputs brief, direct, and simple. Do not hallucinate historical traces."
-    prompt_payload = f"Sensed Screen OCR Layout: {state['captured_context']}\nUser Intent Input: {state['raw_user_input']}"
+    safe_context = redact_secrets(state.get("captured_context") or "")
+    safe_user_input = redact_secrets(state.get("raw_user_input") or "")
+    prompt_payload = f"Sensed Screen OCR Layout: {safe_context}\nUser Intent Input: {safe_user_input}"
     structured_steps = None
     
     try:
@@ -105,23 +111,26 @@ def safety_gate_condition(state: VassalOpsState) -> str:
     return "execute_macros" if state.get("approval_status") == "approved" else END
 
 def execute_macros_node(state: VassalOpsState) -> Dict:
-    print("\n[VassalOps] [MCP Client Active] Connecting to Universal Tool Server...")
+    print("\n[VassalOps] [ToolRouter] Dispatching approved automation steps...")
     time.sleep(1.0)
     
-    # Instantiate our decoupled local Model Context Protocol engine server
-    from src.execution.mcp_server import VassalOpsMCPServer
-    mcp_bridge = VassalOpsMCPServer()
+    from src.execution.tool_router import VassalOpsToolRouter
+    tool_router = VassalOpsToolRouter()
     
     for step in state["proposed_actions"]:
+        verdict = action_firewall.verify_step(step)
+        if verdict["status"] != "VERIFIED":
+            print(f" [Firewall] Rejected step: {verdict['reason']}")
+            continue
+
         action_type = step["type"]; payload = step["payload"]
         
-        # Route core automated processes directly through our isolated MCP server handlers
         if action_type == "run_backup":
-            mcp_result = mcp_bridge.call_tool("run_backup")
-            print(f" [MCP Response] {mcp_result['message']}")
+            mcp_result = tool_router.call_tool("run_backup")
+            print(f" [ToolRouter] {mcp_result['message']}")
         elif action_type == "sort_intel":
-            mcp_result = mcp_bridge.call_tool("sort_intel")
-            print(f" [MCP Response] {mcp_result['message']}")
+            mcp_result = tool_router.call_tool("sort_intel")
+            print(f" [ToolRouter] {mcp_result['message']}")
             
         # Keep specialized UI-bound and tracking functions running on standard system hooks
         elif action_type == "extract_intel": data_extractor.export_scraped_entities(state["extracted_entities"])
@@ -135,6 +144,7 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
         elif action_type == "press_hotkey": operator_bridge.execute_system_hotkey(payload)
         elif action_type == "speak_log": print(f"[VassalOps Output] {payload}")
 
+    return {}
 workflow = StateGraph(VassalOpsState)
 workflow.add_node("capture_context", capture_context_node)
 workflow.add_node("parse_intent", parse_intent_node)
@@ -190,19 +200,51 @@ class VassalOpsAPI:
             
         try:
             print(f"[UI Input Received] processing: {user_input}")
+            thread_id = "vassalops_default_session"
             initial_state = {
                 "raw_user_input": user_input,
                 "captured_context": "",
                 "extracted_entities": {},
                 "normalized_intent": {},
                 "proposed_actions": [],
-                "approval_status": "approved"
+                "approval_status": "pending"
             }
-            config = {"configurable": {"thread_id": "vassalops_default_session"}}
+            config = {"configurable": {"thread_id": thread_id}}
             vassalops_engine.invoke(initial_state, config=config)
-            return "Action executed successfully."
+            current_state = vassalops_engine.get_state(config).values
+            proposed = current_state.get("proposed_actions") or []
+            return json.dumps({
+                "status": "pending_approval",
+                "thread_id": thread_id,
+                "proposed_actions": proposed,
+                "message": "Review the proposed steps, then Approve or Reject."
+            })
         except Exception as e:
             return f"Error executing action: {str(e)}"
+
+    def confirm_plan(self, approved: bool) -> str:
+        """Bot-sitter gate: execute or discard the pending plan for the UI session."""
+        thread_id = "vassalops_default_session"
+        config = {"configurable": {"thread_id": thread_id}}
+        try:
+            snapshot = vassalops_engine.get_state(config)
+            current_state = dict(snapshot.values) if snapshot and snapshot.values else {}
+            proposed = current_state.get("proposed_actions") or []
+
+            if not proposed:
+                return "No pending plan to confirm."
+
+            if not approved:
+                current_state["approval_status"] = "rejected"
+                print("[VassalOps] Plan rejected by bot-sitter.")
+                return "Plan rejected. No desktop actions were executed."
+
+            current_state["approval_status"] = "approved"
+            print("[VassalOps] Plan approved by bot-sitter. Executing macros...")
+            execute_macros_node(current_state)
+            return "Action executed successfully."
+        except Exception as e:
+            return f"Error confirming plan: {str(e)}"
 
 def force_win32_window_icon():
     """Win32 Kernel Hack: Forces Windows to paint vassal_icon.ico onto the title bar frame directly."""

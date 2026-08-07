@@ -7,7 +7,9 @@
     "runtime_boundaries": {
         "max_input_characters": 4000,
         "database_storage_path": "C:\\VassalOps\\storage\\gm_core.db",
-        "rolling_history_limit": 6
+        "rolling_history_limit": 6,
+        "broker_bind_host": "127.0.0.1",
+        "broker_port": 8765,
+        "broker_auth_token": "vo_local_7QmK9pL2xR4nT8vW1cY5hJ3"
     }
 }
-

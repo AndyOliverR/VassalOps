@@ -12,17 +12,55 @@ except ImportError:
     raise ImportError("Dependency missing. Please run: pip install websockets")
 
 # Import the core LangGraph state engine, the execute node, and our audit tracker
-from app import gm_engine, execute_macros_node
+from app import vassalops_engine, execute_macros_node
 from src.execution.audit_ledger import VassalOpsAuditLedger
 from src.execution.background_scheduler import VassalOpsBackgroundDaemon
 
+
+def _load_broker_runtime_config():
+    """Reads localhost bind settings and shared auth token from config.json."""
+    defaults = {
+        "broker_bind_host": "127.0.0.1",
+        "broker_port": 8765,
+        "broker_auth_token": "",
+    }
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config.json"))
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        boundaries = data.get("runtime_boundaries", {})
+        return {
+            "broker_bind_host": boundaries.get("broker_bind_host", defaults["broker_bind_host"]),
+            "broker_port": int(boundaries.get("broker_port", defaults["broker_port"])),
+            "broker_auth_token": boundaries.get("broker_auth_token", defaults["broker_auth_token"]),
+        }
+    except Exception as e:
+        print(f"[VassalOps Broker] Warning: failed to load config.json ({e}); using localhost defaults.")
+        return defaults
+
+
 class GMANetworkBroker:
-    def __init__(self, host: str = "0.0.0.0", port: int = 8765):
-        self.host = host
-        self.port = port
+    def __init__(self, host: str = None, port: int = None, auth_token: str = None):
+        runtime = _load_broker_runtime_config()
+        self.host = host if host is not None else runtime["broker_bind_host"]
+        self.port = port if port is not None else runtime["broker_port"]
+        self.auth_token = auth_token if auth_token is not None else runtime["broker_auth_token"]
         self.ledger = VassalOpsAuditLedger()
         self.daemon_guard = VassalOpsBackgroundDaemon(check_interval_sec=10.0)
         print(f"[VassalOps Broker] Initialized Remote Macro Execution Broker on {self.host}:{self.port}")
+
+    def verify_broker_token(self, payload: dict) -> dict:
+        """Rejects payloads that omit or mismatch the shared broker auth token."""
+        expected = (self.auth_token or "").strip()
+        if not expected:
+            return {
+                "status": "ERROR",
+                "msg": "Broker auth token is not configured in config.json runtime_boundaries.broker_auth_token",
+            }
+        provided = payload.get("token", "")
+        if provided != expected:
+            return {"status": "ERROR", "msg": "Unauthorized: missing or invalid broker token"}
+        return {"status": "OK"}
 
     async def handle_stream(self, websocket):
         """Intercepts telemetry, extracts channel partition IDs, and runs workflows with physical macro injection."""
@@ -33,6 +71,11 @@ class GMANetworkBroker:
             async for message in websocket:
                 try:
                     payload = json.loads(message)
+                    auth_result = self.verify_broker_token(payload)
+                    if auth_result["status"] != "OK":
+                        await websocket.send(json.dumps(auth_result))
+                        continue
+
                     device_source = payload.get("device", "Remote Display")
                     remote_intent = payload.get("command", "").strip()
                     channel_id = payload.get("channel", f"channel_{device_source.replace(' ', '_').lower()}")
@@ -42,14 +85,21 @@ class GMANetworkBroker:
                     if remote_intent:
                         print(f"[VassalOps Broker] Initializing state graph pipeline loop...")
                         thread_config = {"configurable": {"thread_id": f"session_{channel_id}"}}
-                        initial_state = {"raw_user_input": remote_intent, "approval_status": "pending"}
+                        initial_state = {
+                            "raw_user_input": remote_intent,
+                            "captured_context": "",
+                            "extracted_entities": {},
+                            "normalized_intent": {},
+                            "proposed_actions": [],
+                            "approval_status": "pending",
+                        }
 
-                        for event in gm_engine.stream(initial_state, thread_config):
+                        for event in vassalops_engine.stream(initial_state, thread_config):
                             pass
 
-                        current_state = gm_engine.get_state(thread_config).values
+                        current_state = dict(vassalops_engine.get_state(thread_config).values)
 
-                        print(f"\n=========== ??? WIRELESS CONFIRMATION: CHANNEL [{channel_id.upper()}] ===========")
+                        print(f"\n=========== WIRELESS CONFIRMATION: CHANNEL [{channel_id.upper()}] ===========")
                         print(f"Origin Device: {device_source}")
                         print(f"Captured Text Context: '{current_state.get('captured_context', '')}'")
                         print("\nGenerated Remote Automation Steps Blueprint:")
@@ -70,7 +120,7 @@ class GMANetworkBroker:
                         if user_approval.lower() == 'y':
                             current_state["approval_status"] = "approved"
                             print("\n[VassalOps Broker] Wireless approval signed. Injecting hardware execution chain...")
-                            
+
                             # Phase 19 Fix: Explicitly fire macro execution module to trigger mouse/keyboard commands locally
                             execute_macros_node(current_state)
 
@@ -102,8 +152,3 @@ class GMANetworkBroker:
 if __name__ == "__main__":
     broker = GMANetworkBroker()
     broker.start_server()
-
-
-
-
-

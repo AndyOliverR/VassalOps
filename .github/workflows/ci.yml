@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Syntax check key modules
+        run: |
+          python -m py_compile app.py src/execution/tool_router.py src/execution/action_firewall.py src/ingestion/secret_redactor.py src/execution/diagnostics_engine.py src/execution/audit_ledger.py src/communication/socket_broker.py
+
+      - name: Hermetic unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+        env:
+          PYTHONPATH: ${{ github.workspace }}

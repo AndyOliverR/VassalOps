@@ -57,6 +57,34 @@ class VassalOpsAuditLedger:
             print(f"[VassalOps Ledger Error] Failed to write historical row artifact: {e}")
             return False
 
+    def fetch_recent_intents(self, limit: int = 20) -> list:
+        """Returns the newest audit rows as dicts for sleep-time / health analysis."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, timestamp, channel_id, device_source, command_intent, execution_status
+                FROM system_action_audit
+                ORDER BY id DESC
+                LIMIT ?
+            ''', (int(limit),))
+            rows = cursor.fetchall()
+            conn.close()
+            results = []
+            for row in rows:
+                results.append({
+                    "id": row[0],
+                    "timestamp": row[1],
+                    "channel_id": row[2],
+                    "device_source": row[3],
+                    "command_intent": row[4],
+                    "execution_status": row[5],
+                })
+            return results
+        except Exception as e:
+            print(f"[VassalOps Ledger Error] Failed to read recent intents: {e}")
+            return []
+
 if __name__ == "__main__":
     print("[INIT] Testing Phase 15 Partitioned AuditLedger pipelines...")
     ledger = VassalOpsAuditLedger()

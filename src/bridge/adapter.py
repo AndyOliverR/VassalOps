@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("LangGraphVisualAdapter")
 
 class LangGraphBrokerAdapter(GMANetworkBroker):
-    def __init__(self, port: int = 8765):
-        super().__init__(host="0.0.0.0", port=port)
+    def __init__(self, port: int = None):
+        super().__init__(host="127.0.0.1", port=port)
         self.aggregator = WorkspaceContextAggregator()
         self.engine = VassalOpsEngine()
         self.matcher = GMSemanticMatcher()
@@ -33,6 +33,11 @@ class LangGraphBrokerAdapter(GMANetworkBroker):
             async for message in websocket:
                 try:
                     payload = json.loads(message)
+                    auth_result = self.verify_broker_token(payload)
+                    if auth_result["status"] != "OK":
+                        await websocket.send(json.dumps(auth_result))
+                        continue
+
                     device_source = payload.get("device", "Remote Display")
                     raw_user_command = payload.get("command", "").strip()
                     channel_id = payload.get("channel", "default_channel")

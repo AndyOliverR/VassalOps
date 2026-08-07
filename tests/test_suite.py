@@ -1,7 +1,12 @@
+import os
 import unittest
 import urllib.request
 import json
 
+_LIVE = os.getenv("VASSALOPS_LIVE") == "1"
+
+
+@unittest.skipUnless(_LIVE, "Set VASSALOPS_LIVE=1 to run live Ollama/network checks")
 class TestVassalOpsPipeline(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -31,17 +36,16 @@ class TestVassalOpsPipeline(unittest.TestCase):
         """Production Check: Verify live network scraping pipeline against FutureSeer.app."""
         target_url = "https://www.futureseer.app"
         req = urllib.request.Request(
-            target_url, 
+            target_url,
             headers={'User-Agent': 'Mozilla/5.0 GM-AI-Core-Network-Validator/1.0'}
         )
         try:
             with urllib.request.urlopen(req, timeout=7) as response:
                 status_code = response.getcode()
-                # Confirm the website is alive and serving healthy 200 response codes
                 self.assertEqual(status_code, 200, f"FutureSeer.app returned status {status_code}")
         except Exception as e:
             self.fail(f"Live network verification test failed to reach FutureSeer.app: {e}")
 
+
 if __name__ == "__main__":
     unittest.main()
-

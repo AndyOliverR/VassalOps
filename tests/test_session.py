@@ -2,12 +2,15 @@ import unittest
 import os
 import shutil
 import sys
-sys.path.append(r'C:\VassalOps\src')
+import tempfile
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 from tracking.session import GMSessionTracker
+
 
 class TestGMSessionTracker(unittest.TestCase):
     def setUp(self):
-        self.test_dir = r"C:\VassalOps\storage_test"
+        self.test_dir = tempfile.mkdtemp(prefix="vassalops_session_")
         self.tracker = GMSessionTracker(storage_dir=self.test_dir, max_history=2)
 
     def tearDown(self):
@@ -23,14 +26,12 @@ class TestGMSessionTracker(unittest.TestCase):
 
     def test_memory_cap_truncation(self):
         sid = "limit_test"
-        # Append 6 turns (exceeds our max_history * 2 space limit)
         for i in range(6):
-            self.tracker.append_turn(sid, "user" if i%2==0 else "assistant", f"Turn {i}")
+            self.tracker.append_turn(sid, "user" if i % 2 == 0 else "assistant", f"Turn {i}")
         history = self.tracker.load_history(sid)
-        self.assertEqual(len(history), 4) # Hard restricted back to 4 elements max
+        self.assertEqual(len(history), 4)
         self.assertEqual(history[-1]["content"], "Turn 5")
+
 
 if __name__ == "__main__":
     unittest.main()
-
-

@@ -1,40 +1,47 @@
-﻿# 🤝 Contributing to VassalOps
+﻿# Contributing to VassalOps
 
-Thank you for checking out VassalOps! We are building a local-first, self-improving workspace, and we love community contributions. Whether you are fixing an indentation bug, optimizing context window sizes, or adding a new theme to the interface, your help makes a huge difference.
-
----
-
-## 📂 Project Directory Map
-To help you find your way around the codebase quickly:
-- `app.py`: The core application entry point, Win32 window hooks, and pywebview UI bridge routes.
-- `src/execution/`: Contains the primary automation scripts (`macro_player.py`, `macro_recorder.py`, `macro_orchestrator.py`).
-- `src/execution/mcp_server.py`: The Model Context Protocol (MCP) server environment hosting decoupled tools.
-- `src/execution/diagnostics_engine.py`: The multi-agent Screener/Verifier trace log processing module.
-- `storage/dashboard/`: Frontend minimalist template framework (HTML, CSS layout, JavaScript streams).
+Thanks for helping improve VassalOps. Keep changes focused, local-first, and honest about what the code actually does.
 
 ---
 
-## 🚀 Active Roadmap: Good First Issues
-If you want to contribute but are not sure where to start, we have pre-triaged 3 actionable features. Pick one, open a GitHub Issue to claim it, and submit your Pull Request!
+## Project map
 
-### 1. [Good First Issue] Add More Synthetic Tasks to IssueBench
+- `app.py` — LangGraph entry, pywebview `js_api` (`submit_command` / `confirm_plan`), macro execution
+- `src/execution/tool_router.py` — In-process tool dispatcher (backup/sort); not MCP isolation
+- `src/execution/diagnostics_engine.py` — Screener / Verifier / Director over audit ledger traces
+- `src/execution/action_firewall.py` — Allowlist for executable action types
+- `src/ingestion/secret_redactor.py` — Redacts secrets before model prompts
+- `src/communication/socket_broker.py` — Optional localhost WebSocket broker (token required)
+- `storage/dashboard/` — HTML/CSS/JS control panel
+- `storage/agent.md` — Long-term preference notes updated by sleep-time compute
+
+---
+
+## Good first issues
+
+### 1. Expand IssueBench synthetic tasks
+
 - **File:** `src/execution/issue_bench.py`
-- **Goal:** Expand our synthetic task benchmark library. Add 3 new mock error profiles (e.g., Clipboard parsing mismatch, voice-ledger synthesis timeout, or disk write denial exceptions) into the JSON array generator to stress-test the verifier sub-agent boundaries.
+- Add a few mock error profiles for verifier stress tests.
 
-### 2. [Good First Issue] Add a Dark/Light Mode Theme Toggle UI
-- **File:** `storage/dashboard/index.html`
-- **Goal:** Improve the customization settings panel drawer by adding a visual theme toggle slider or button mechanism. Bind it to local browser memory cache (`localStorage`) so user theme preferences persist perfectly across window lifecycle boots.
+### 2. Theme toggle in the dashboard
 
-### 3. [Good First Issue] Expand the MCP Server with a System Disk Space Tool
-- **File:** `src/execution/mcp_server.py`
-- **Goal:** Enhance our universal tool router. Wrap a native Python filesystem check function into the tool layout array so the main agent loop can autonomously check available hard drive storage allocation blocks during background optimization loops.
+- **File:** `storage/dashboard/index.html` (+ CSS/JS)
+- Persist light/dark preference in `localStorage`.
+
+### 3. Add a disk-space tool to ToolRouter
+
+- **File:** `src/execution/tool_router.py`
+- Expose a safe free-disk check as a listed tool the planner can propose (still subject to human approval).
 
 ---
 
-## 🛠️ Contribution Workflow
-1. Fork the repository and create your feature branch: `git checkout -b feature/amazing-improvement`
-2. Ensure your Python files compile perfectly without formatting or indentation errors: `python -m py_compile path/to/file.py`
-3. Commit your modifications with a crisp descriptive log message.
-4. Push to your branch and open a clean Pull Request against the `main` branch.
+## Workflow
 
-We review every single PR rapidly. Let's build the ultimate local desktop agent framework together!
+1. Fork and branch: `git checkout -b feature/your-improvement`
+2. Install deps: `pip install -r requirements.txt`
+3. Run hermetic tests: `python -m unittest discover -s tests -p "test_*.py"`
+4. Live Ollama/network checks only when needed: set `VASSALOPS_LIVE=1`
+5. Open a PR against `main` with a short description of why
+
+We prefer small PRs that do not reintroduce LAN-exposed brokers by default or auto-approve desktop macros from chat.

@@ -1,7 +1,10 @@
 import unittest
+import os
 import sys
-sys.path.append(r'C:\VassalOps\src')
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 from actions.bridge import GMActionBridge
+
 
 class TestGMActionBridge(unittest.TestCase):
     def setUp(self):
@@ -9,7 +12,6 @@ class TestGMActionBridge(unittest.TestCase):
 
     def test_whitelist_validation(self):
         """Verify the internal application whitelisting checks function properly."""
-        # Check an item explicitly listed in our whitelist key paths
         self.assertIn("calc", self.bridge.allowed_applications)
         self.assertIn("notepad", self.bridge.allowed_applications)
 
@@ -18,7 +20,6 @@ class TestGMActionBridge(unittest.TestCase):
         result = self.bridge.execute_app("powershell.exe")
         self.assertEqual(result["status"], "REJECTED")
 
+
 if __name__ == "__main__":
     unittest.main()
-
-

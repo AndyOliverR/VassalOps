@@ -17,7 +17,8 @@ async def simulate_mobile_payload():
             # Structuring a mock payload as if a user tapped an option on a mobile screen
             mock_payload = {
                 "device": "Android Phone Pro",
-                "command": "click notepad and type mobile link synced"
+                "command": "click notepad and type mobile link synced",
+                "token": "vo_local_7QmK9pL2xR4nT8vW1cY5hJ3"
             }
             
             print(f"[Mobile Link] Dispatching automated task stream...")

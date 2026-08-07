@@ -1,7 +1,10 @@
 import unittest
+import os
 import sys
-sys.path.append(r'C:\VassalOps\src')
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 from ingestion.parser import GMInputParser
+
 
 class TestGMInputParser(unittest.TestCase):
     def setUp(self):
@@ -25,7 +28,6 @@ class TestGMInputParser(unittest.TestCase):
         result = self.parser.parse_payload(raw)
         self.assertEqual(len(result["prompt"]), 100)
 
+
 if __name__ == "__main__":
     unittest.main()
-
-

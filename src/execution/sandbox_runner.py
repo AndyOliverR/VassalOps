@@ -7,11 +7,20 @@ from typing import Dict, Any
 logger = logging.getLogger("GMSandboxRunner")
 
 class GMSandboxRunner:
+    """
+    Runs scratchpad scripts in a separate Python subprocess with a timeout.
+
+    Limits (important): this is NOT an OS jail, container, or privilege drop.
+    Scripts still execute with the host user's privileges and can access the
+    filesystem/network available to that user. Prefer human review before
+    running LLM-generated code through this runner.
+    """
+
     def __init__(self, scratch_dir: str = "C:\\VassalOps\\scratchpad"):
         self.scratch_dir = scratch_dir
 
     def execute_script(self, filename: str, timeout_sec: float = 5.0) -> dict:
-        """Executes a sandboxed script in an isolated subprocess and returns the execution matrix."""
+        """Executes a scratchpad script in a subprocess and returns stdout/stderr/status."""
         target_path = os.path.join(self.scratch_dir, filename)
         if not os.path.exists(target_path):
             return {"status": "ERROR", "exception": "Target script file does not exist inside sandbox."}
