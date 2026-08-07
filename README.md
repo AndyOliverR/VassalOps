@@ -1,4 +1,6 @@
-﻿# VassalOps
+﻿# <img src="storage/dashboard/vassal_icon.png" alt="" width="48" height="48" align="left" /> VassalOps
+
+<br clear="all" />
 
 **Your PC’s workday — taught by you, approved by you, run locally.**
 
