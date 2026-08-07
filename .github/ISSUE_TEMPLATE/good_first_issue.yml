@@ -1,0 +1,28 @@
+name: Good first issue
+description: Small, well-scoped task for new contributors
+title: "[good first issue] "
+labels: ["good first issue", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping VassalOps. Keep changes local-first and honest (see CONTRIBUTING.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will we know this is done?
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Code / docs area
+      placeholder: e.g. storage/duties/packs/, landmark_target.py

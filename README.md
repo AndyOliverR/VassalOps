@@ -1,120 +1,157 @@
 ﻿# VassalOps
 
+**Your PC’s workday — taught by you, approved by you, run locally.**
+
+[![CI](https://github.com/AndyOliverR/VassalOps/actions/workflows/ci.yml/badge.svg)](https://github.com/AndyOliverR/VassalOps/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Issues](https://img.shields.io/github/issues/AndyOliverR/VassalOps)](https://github.com/AndyOliverR/VassalOps/issues)
 
-Local-first desktop agent for Windows: a **pywebview** control panel, **LangGraph** planning, local **Ollama** inference, and **pyautogui** automation — with a human bot-sitter approval gate before mouse/keyboard macros run.
+Local-first **Windows** desktop agent: a pywebview control panel, LangGraph planning, local Ollama, and pyautogui automation — with a human **bot-sitter Approve gate** before mouse/keyboard actions run.
 
-Enterprise data stays on your machine by default. Optional network features bind to localhost and require a shared token.
+Data stays on your machine by default. Optional network features bind to **localhost** and require a shared token.
 
 ---
 
-## What it actually does
+## What it is / is not
 
-1. **Capture** — screen OCR / clipboard context for the planner.
-2. **Parse** — local Ollama turns your instruction into structured action steps (JSON).
-3. **Approve** — the dashboard shows proposed steps; you must **Approve** or **Reject** before execution.
-4. **Execute** — approved steps run via pyautogui / macros / an in-process **ToolRouter** (backup, sort).
+| It is | It is not |
+|-------|-----------|
+| A teachable **workday** runner for your Windows PC | A cloud chatbot that holds your company data |
+| **Approve → run** desktop automation you can watch and Stop | Silent unsupervised “become me” autopilot |
+| Complementary to chat/gateway agents (e.g. multi-channel assistants) | A clone of multi-OS messaging gateways |
+
+---
+
+## Install
+
+**Prerequisites:** [Python 3.11+](https://www.python.org/downloads/) (Add to PATH) and [Ollama](https://ollama.com/).
+
+**Windows (recommended one-shot):**
+
+```powershell
+# From the VassalOps folder after clone/unzip
+powershell -ExecutionPolicy Bypass -File .\install_vassalops.ps1
+```
+
+That installs packages, checks Ollama, and creates a Desktop shortcut to `bootstrap_and_run.bat`.
+
+**Or launch directly:**
+
+```bat
+bootstrap_and_run.bat
+```
+
+Prefer the `.bat` path. Unsigned `VassalOps.exe` builds often trigger antivirus false positives — see [Antivirus false positives](#antivirus-false-positives-k7-windows-defender-etc). Do not use the old stub `VassalOpsLaunch.exe`.
+
+---
+
+## Quick start
+
+1. Open VassalOps (Desktop shortcut or `bootstrap_and_run.bat`).
+2. In chat, type: `import demo pack`
+3. Type: `run duty demo notepad hello`
+4. Review the **plain-English** plan → **Approve**
+5. Watch the progress panel (use **Stop** or **Continue** if it pauses)
+
+You should see Notepad open and type a short greeting. That is the 60-second demo.
+
+**Train your real workday**
+
+1. `teach morning email` → Approve → do the task yourself → press **Escape**
+2. Repeat for other duties → `build my workday`
+3. Next morning: **Daily Duties** → **Approve today's run** (or `run my workday`)
+
+Optional weekday briefing only (never silent run): `register_morning_briefing.bat`
+
+---
+
+## How it fits together
 
 ```text
-capture_context -> parse_intent -> [human approve] -> execute_macros
+capture_context -> parse_intent -> [human Approve] -> execute -> audit ledger
 ```
+
+- **Control UI** — pywebview loads `storage/dashboard/`; chat + Daily Duties + live progress / Stop / stuck Continue
+- **Planner** — LangGraph in `app.py` + local Ollama JSON steps (plain-English checklist in the Approve UI)
+- **Bot-sitter** — nothing desktop-destructive runs until you Approve (or Approve today's playlist)
+- **Duties** — teach/replay under `storage/duties/`; morning playlist in `playlist.json`
+- **Landmarks** — replay prefers window-title focus (and optional OCR text) before raw coordinates; pauses if missing
+- **ToolRouter** — in-process backup/sort dispatcher — **not** MCP process isolation
+- **Broker** — optional WebSocket on `127.0.0.1` with token — **off by default**
+- **Ledger / sleep-time** — audit rows can feed preferences in `storage/agent.md`
 
 ---
 
-## Architecture (honest)
+## Security
 
-| Piece | Reality |
-|-------|---------|
-| **UI** | pywebview loads `storage/dashboard/` and calls Python via `js_api` |
-| **Planner** | Thin LangGraph graph in `app.py` with SQLite checkpointer (`gm_memory.db`, local) |
-| **Model** | Ollama on `127.0.0.1:11434` (auto-started if missing from PATH) |
-| **ToolRouter** | In-process dispatcher (`src/execution/tool_router.py`) — **not** Model Context Protocol process isolation |
-| **Bot-sitter** | UI `confirm_plan` + optional broker console y/n |
-| **Broker** | Optional WebSocket on `127.0.0.1:8765` with `broker_auth_token` from `config.json` — **not** started by default |
-| **Sandbox runner** | Subprocess + timeout only — **not** an OS jail or container; scripts still run as your user |
-| **Sleep-time / health** | Screener/Verifier read real rows from the audit ledger and may append preferences to `storage/agent.md` |
+Treat every proposed plan as untrusted until you read it. Desktop automation runs **as your Windows user**.
+
+- **Approve required** before teach, fetch, duty run, or playlist run
+- **Stuck / MFA pause** — missing window or landmark freezes automation and asks you to Continue (no silent smash-through)
+- **Broker** stays on localhost + shared token when enabled
+- **Teach mode** can record keystrokes (including passwords) — prefer click-only for logins; we warn in UI
+- **No silent autopilot by default** — morning Task Scheduler only opens the briefing UI
+
+Full policy and reporting: **[SECURITY.md](SECURITY.md)**
+
+Security practices for local agents are inspired by community guidance (including projects like [OpenClaw](https://github.com/openclaw/openclaw)’s emphasis on untrusted input and host-tool risk)—adapted here for **Windows desktop Approve/duty** workflows.
 
 ---
 
-## Quick start (lay user)
+## Documentation
 
-**Tagline:** *Your PC’s workday — taught by you, approved by you, run locally.*
+| Goal | Start here |
+|------|------------|
+| Install & run on Windows | [Install](#install), `install_vassalops.ps1` |
+| 60-second demo | [Quick start](#quick-start), `storage/duties/packs/` |
+| Train Daily Duties | [Quick start](#quick-start) → train section |
+| Antivirus false positives | [below](#antivirus-false-positives-k7-windows-defender-etc) |
+| Threat model & vulnerability reports | [SECURITY.md](SECURITY.md) |
+| Contribute / good first issues | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Architecture honesty | [How it fits together](#how-it-fits-together) |
 
-### One-time prerequisites
-1. Install [Python 3.11+](https://www.python.org/downloads/) (check **Add python.exe to PATH**).
-2. Install [Ollama](https://ollama.com/).
+### Antivirus false positives (K7, Windows Defender, etc.)
 
-### Install & run
-1. Clone or unzip VassalOps onto the PC (example: `C:\VassalOps`).
-2. **Right-click `install_vassalops.ps1` → Run with PowerShell** (once). It installs Python packages, checks Ollama, pulls a usable model if needed, and creates a Desktop shortcut.
-3. Or double-click **`bootstrap_and_run.bat`** / **`VassalOps.exe`** (build with `packaging\build_launcher.ps1`).
-4. Type an instruction → review the **plain-English** plan → **Approve** or **Reject**. Watch the progress panel; use **Stop** or **Continue** if it pauses (MFA / missing window).
+Teach/replay uses keyboard/mouse hooks and desktop control; unsigned PyInstaller EXEs look like packed malware to many AVs. That is usually a **heuristic false positive**, not proof of a spyware payload in this repo.
 
-If something fails, read `storage\launch.log`. Prefer `VassalOps.exe` from `packaging\build_launcher.ps1` over the old stub `VassalOpsLaunch.exe`.
+1. Check **Reports** for the exact path.
+2. If it is under your VassalOps folder → restore + **folder exclusion** for that root.
+3. Keep launching with `bootstrap_and_run.bat`.
+4. Do not disable antivirus globally.
 
-### What you can ask
-- Simple facts: “what’s the date?”
-- Desktop help via the local model (clicks/typing only after Approve)
-- **60-second demo:** `import demo pack` → `run duty demo notepad hello` → Approve
-- **Learn a one-off macro:** `learn my_login` → Approve → perform the task → press Escape
-- **Replay macro:** `fetch my_login` → Approve
+---
 
-### Train your workday (Daily Duties)
-Goal: show VassalOps what you do once, then run those duties each morning with one Approve.
+## Development
 
-1. `teach morning email` → **Approve** → do the email check yourself → press **Escape** to stop recording.  
-   (Keystrokes are recorded — avoid typing passwords when possible.)
-2. Repeat for other duties (`teach sap check`, etc.).
-3. `build my workday` — schedules all taught duties into today’s playlist.
-4. Open **Daily Duties** in the UI (or say `my workday`) → check items → **Approve today's run**.
-5. Or chat: `run my workday` → Approve (stops on first failure; pauses if a window/landmark is missing).
-
-Replay prefers **window-title focus** (and optional OCR landmarks) before raw coordinates. If MFA/CAPTCHA blocks a step, VassalOps **pauses** and asks you to Continue.
-
-Optional weekday auto-open (briefing only, never silent autopilot):
-
-```bat
-register_morning_briefing.bat
-```
-
-Duties live in `storage/duties/`. Sample packs: `storage/duties/packs/`. This is **not** full unsupervised “become me” — UI drift, MFA, and CAPTCHAs still need you.
-
-### Build the desktop launcher EXE
-```bat
-powershell -ExecutionPolicy Bypass -File packaging\build_launcher.ps1
-```
-Produces `VassalOps.exe` next to the repo (thin launcher that starts bootstrap).
-
-### Developer run
 ```bash
 git clone https://github.com/AndyOliverR/VassalOps.git
 cd VassalOps
 pip install -r requirements.txt
+set PYTHONPATH=%CD%
+python -m unittest discover -s tests -p "test_*.py"
 python app.py
 ```
 
-`launch_engine.bat` also goes through the same bootstrap path. Optional broker:
+Optional broker (token from `config.json`):
 
 ```bash
 python src/communication/socket_broker.py
 ```
 
-Clients must send JSON including `"token"` matching `runtime_boundaries.broker_auth_token` in `config.json`.
+Optional EXE packaging (dev only; exclude folder in AV first): `packaging\build_launcher.ps1`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). AI-assisted PRs are welcome when tests pass and README/security claims stay honest.
 
 ---
 
-## Safety notes
+## Community and funding
 
-- Desktop automation can click and type as you. Never approve a plan you have not read.
-- OCR/clipboard text is redacted before model prompts where possible; treat screen content as sensitive.
-- Do not commit local `*.db` files, binaries, or `build/` / `dist/` artifacts.
+- **Bugs & ideas:** [GitHub Issues](https://github.com/AndyOliverR/VassalOps/issues) (look for `good first issue`)
+- **Pull requests:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Sponsor:** GitHub Sponsors via [FUNDING.yml](.github/FUNDING.yml) (`AndyOliverR`) when enabled on the account
 
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Pitch for operators and funders: a **work-PC-safe** local agent with human Approve and teachable duties — compliance-friendlier than chat agents that run host tools unchecked.
 
 ---
 

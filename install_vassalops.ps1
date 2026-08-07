@@ -90,21 +90,27 @@ Write-Step "Creating Desktop shortcut"
 $desktop = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktop "VassalOps.lnk"
 $bat = Join-Path $Root "bootstrap_and_run.bat"
-$exe = Join-Path $Root "VassalOps.exe"
-$target = if (Test-Path $exe) { $exe } else { $bat }
+# Always use the .bat — unsigned VassalOps.exe is a common AV false positive (K7/Defender).
+$target = $bat
 $wsh = New-Object -ComObject WScript.Shell
 $sc = $wsh.CreateShortcut($shortcutPath)
 $sc.TargetPath = $target
 $sc.WorkingDirectory = $Root
 $sc.WindowStyle = 7
-$sc.Description = "VassalOps — local desktop agent"
+$sc.Description = "VassalOps — local desktop agent (bootstrap_and_run.bat)"
 $icon = Join-Path $Root "storage\dashboard\vassal_icon.ico"
 if (Test-Path $icon) { $sc.IconLocation = $icon }
 $sc.Save()
 Write-Host "Shortcut: $shortcutPath -> $target"
 
-Write-Step "Optional: build real VassalOps.exe launcher"
-Write-Host "  powershell -ExecutionPolicy Bypass -File packaging\build_launcher.ps1"
+Write-Host ""
+Write-Host "Antivirus tip: If K7/Defender quarantines teach/replay or a built EXE, add a folder exclusion for:" -ForegroundColor Yellow
+Write-Host "  $Root"
+Write-Host "Prefer this .bat shortcut; do not rely on an unsigned VassalOps.exe for daily use."
+
+Write-Step "Optional developer packaging only"
+Write-Host "  (Skip for normal use.) powershell -ExecutionPolicy Bypass -File packaging\build_launcher.ps1"
+Write-Host "  Exclude this folder in AV before building, or PyInstaller output may be locked/quarantined."
 
 Write-Host ""
 Write-Host "Install complete. Double-click the Desktop VassalOps shortcut (or bootstrap_and_run.bat)." -ForegroundColor Green
