@@ -19,6 +19,9 @@ ALLOWED_ACTION_TYPES: Set[str] = {
     "speak_log",
     "focus_window",
     "click_landmark",
+    "agent_loop",
+    "search_memory",
+    "list_duties",
 }
 
 
@@ -44,7 +47,7 @@ class VassalOpsActionFirewall:
             }
 
         payload = step.get("payload", "")
-        if action_type in ("type_text", "press_key", "press_hotkey", "click_element", "speak_log", "learn_macro", "run_saved_macro", "teach_duty", "run_duty", "focus_window", "click_landmark"):
+        if action_type in ("type_text", "press_key", "press_hotkey", "click_element", "speak_log", "learn_macro", "run_saved_macro", "teach_duty", "run_duty", "focus_window", "click_landmark", "agent_loop", "search_memory"):
             if payload is None or (isinstance(payload, str) and not payload.strip() and action_type != "speak_log"):
                 return {"status": "REJECTED", "reason": f"Action '{action_type}' requires a non-empty payload."}
 
@@ -62,6 +65,10 @@ class VassalOpsActionFirewall:
             keys = str(payload).replace("+", " ").split()
             if not keys or any(len(k) > 32 for k in keys):
                 return {"status": "REJECTED", "reason": "press_hotkey payload is invalid."}
+            joined = "+".join(k.strip().lower() for k in keys)
+            denied = {"alt+f4", "ctrl+alt+del", "win+l", "ctrl+shift+esc"}
+            if joined in denied:
+                return {"status": "REJECTED", "reason": f"press_hotkey '{joined}' is blocked by the denylist."}
 
         return {"status": "VERIFIED", "reason": "Action matches allowlist rules."}
 

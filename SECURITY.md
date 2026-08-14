@@ -33,6 +33,10 @@ We will acknowledge reports as soon as practical and coordinate disclosure.
 - **Teach mode:** `pynput` records keystrokes and clicks. Passwords typed during teach can be stored in duty/macro JSON under `storage/`. Prefer click-only flows for logins; delete sensitive duty files if recorded by mistake.
 - **Replay:** Coordinate clicks are fragile; window-title / OCR landmarks help but can fail. Stuck detection pauses and asks the human to Continue — do not treat Continue as a security boundary for malicious plans you already Approved.
 
+## AI-era risks
+
+Screen OCR, clipboard, and chat goals are **untrusted input** (prompt-injection surface). The local model may propose a plan; secrets are redacted where the redactor runs, but you still treat the plan as untrusted until you read it. **Approve** is the human judgement gate — AI can investigate and draft; you decide what runs. Same lesson as the [GitHub Secure Open Source Fund Session 4 write-up](https://github.blog/open-source/maintainers/what-50-open-source-projects-taught-us-about-security-in-the-ai-era/) (we are not a Fund participant).
+
 ## What we will not do by default
 
 - Silent full-day autopilot without Approve

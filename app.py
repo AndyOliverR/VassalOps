@@ -25,7 +25,14 @@ from src.execution.duty_library import VassalOpsDutyLibrary, extract_duty_name_f
 from src.execution.daily_playlist import VassalOpsDailyPlaylist
 from src.execution.plan_narrator import narrate_proposed_actions
 from src.execution.run_controller import run_controller
-from src.execution.landmark_target import focus_window_by_title, find_text_on_screen
+from src.execution.landmark_target import focus_window_by_title, find_text_on_screen, list_window_titles
+from src.execution.agent_loop import run_agent_loop
+from src.execution.agent_tools import execute_loop_tool, cap_ocr
+from src.execution.structured_llm import PlannerPlan, call_ollama_json, complete_structured
+from src.execution.risk_tiers import annotate_steps, risk_summary
+from src.execution.run_evidence import write_run_report
+from src.execution.local_learning import record_loop_outcome
+from src.execution.session_store import save_last_session, load_last_session, format_resume_context
 import threading
 
 pyautogui.FAILSAFE = True
@@ -192,27 +199,29 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
     host = RUNTIME_CONFIG["host_address"]
     port = RUNTIME_CONFIG["port_mapping"]
     model_name = RUNTIME_CONFIG["active_model"]
-    ollama_url = f"http://{host}:{port}/api/generate"
     system_prompt = (
         "You are VassalOps, a desktop automation planner. "
         "Return ONLY JSON with a top-level 'steps' array. Each step is "
-        "{\"type\": one of type_text|press_key|press_hotkey|click_element|speak_log|run_backup|sort_intel|extract_intel, "
+        "{\"type\": one of type_text|press_key|press_hotkey|click_element|speak_log|run_backup|sort_intel|extract_intel|focus_window|run_duty, "
         "\"payload\": string}. "
         "For simple questions (facts, greetings), use a single speak_log step. "
-        "Keep payloads brief. Do not invent click_element targets you are unsure about."
+        "Keep payloads brief. Do not invent click_element targets you are unsure about. "
+        "This plan is a preview: after Approve a bounded think-act-observe loop will run."
     )
-    safe_context = redact_secrets(state.get("captured_context") or "")
+    safe_context = cap_ocr(redact_secrets(state.get("captured_context") or ""))
     safe_user_input = redact_secrets(state.get("raw_user_input") or "")
     prompt_payload = f"Sensed Screen OCR Layout: {safe_context}\nUser Intent Input: {safe_user_input}"
     structured_steps = None
-    
+
     try:
-        payload = {"model": model_name, "prompt": f"{system_prompt}\n\n{prompt_payload}", "stream": False, "format": "json"}
-        response = requests.post(ollama_url, json=payload, timeout=60).json()
-        raw_response = response.get('response', '{}').strip()
-        parsed_json = json.loads(raw_response)
-        if isinstance(parsed_json, dict) and "steps" in parsed_json and isinstance(parsed_json["steps"], list):
-            structured_steps = parsed_json
+        result = complete_structured(
+            f"{system_prompt}\n\n{prompt_payload}",
+            PlannerPlan,
+            lambda p: call_ollama_json(p, host=host, port=port, model_name=model_name),
+            max_retries=1,
+        )
+        if result.ok and result.data is not None:
+            structured_steps = result.data.model_dump()
             print(f"[VassalOps Diagnostic] Ollama model '{model_name}' response schema validated.")
         else:
             print("[VassalOps Diagnostic Warning] Malformed JSON fields returned from model. Activating recovery rules...")
@@ -220,15 +229,107 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
         print(f"[VassalOps Diagnostic Error] JSON validation trace hit a processing hurdle: {e}")
         steps = [{"type": "speak_log", "payload": f"I could not reach the local model '{model_name}'. Check Ollama is running and config.json active_model is installed."}]
         return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
-        
+
     if not structured_steps:
         steps = [{"type": "speak_log", "payload": "Hello! How can I help you automate your PC today?"}]
         structured_steps = {'steps': steps}
-        
-    return {"normalized_intent": structured_steps, "proposed_actions": structured_steps.get("steps", []), "approval_status": "pending"}
+
+    preview = structured_steps.get("steps") or []
+    only_talk = preview and all(str(s.get("type")) == "speak_log" for s in preview)
+    if only_talk:
+        return {"normalized_intent": structured_steps, "proposed_actions": preview, "approval_status": "pending"}
+
+    readable = narrate_proposed_actions(preview)
+    preview_text = "; ".join(readable[:6]) if readable else "allowlisted desktop tools, duties, and memory search"
+    steps = [
+        {"type": "agent_loop", "payload": state.get("raw_user_input") or ""},
+        {"type": "speak_log", "payload": (
+            f"After Approve I will run a bounded agent loop (max 8 turns: think → tool → observe). "
+            f"Preview: {preview_text}"
+        )},
+    ]
+    return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
 
 def safety_gate_condition(state: VassalOpsState) -> str:
     return "execute_macros" if state.get("approval_status") == "approved" else END
+
+
+def _ollama_generate_json(prompt: str):
+    return call_ollama_json(
+        prompt,
+        host=RUNTIME_CONFIG["host_address"],
+        port=RUNTIME_CONFIG["port_mapping"],
+        model_name=RUNTIME_CONFIG["active_model"],
+    )
+
+
+def run_approved_agent_loop(goal: str, ocr_text: str = "") -> Dict:
+    """Approved think-act-observe loop over the allowlisted tool catalog."""
+    from src.execution.tool_router import VassalOpsToolRouter
+
+    router = VassalOpsToolRouter()
+    titles = []
+    try:
+        titles = list_window_titles()
+    except Exception:
+        titles = []
+    briefing = daily_playlist.get_today_playlist()
+
+    def execute_tool(name: str, payload: str) -> Dict:
+        step = {"type": name, "payload": payload}
+        verdict = action_firewall.verify_step(step)
+        if verdict["status"] != "VERIFIED":
+            return {"ok": False, "observation": f"Firewall rejected: {verdict['reason']}"}
+        return execute_loop_tool(
+            name,
+            payload,
+            duty_library=duty_library,
+            daily_playlist=daily_playlist,
+            operator_bridge=operator_bridge,
+            tool_router=router,
+            run_controller=run_controller,
+            press_hotkey=lambda p: operator_bridge.execute_system_hotkey(p),
+            type_text=lambda p: operator_bridge.execute_text_input(p, press_enter=False),
+            focus_window=focus_window_by_title,
+            ledger=audit_ledger,
+        )
+
+    report = run_agent_loop(
+        goal,
+        call_model=_ollama_generate_json,
+        execute_tool=execute_tool,
+        max_turns=8,
+        ocr_text=ocr_text,
+        window_titles=titles,
+        playlist_items=briefing.get("items"),
+        stop_requested=run_controller.stop_requested,
+        set_progress=lambda cur, label: run_controller.set_progress(cur, label),
+    )
+    audit_ledger.commit_transaction(
+        intent=f"agent_loop:{(goal or '')[:80]}",
+        status="success_completed" if report.get("ok") else "failed",
+        device="agent_loop",
+        channel="workday",
+    )
+    path = write_run_report(
+        goal=goal,
+        ok=bool(report.get("ok")),
+        turns=int(report.get("turns") or 0),
+        observations=report.get("observations") or [],
+        final=str(report.get("final") or ""),
+        reason=str(report.get("reason") or ""),
+        kind="agent_loop",
+    )
+    report["report_path"] = path
+    record_loop_outcome(os.path.join("storage", "agent.md"), report, goal=goal)
+    save_last_session(
+        goal=goal,
+        observations=report.get("observations") or [],
+        final=str(report.get("final") or ""),
+        ok=bool(report.get("ok")),
+    )
+    return report
+
 
 def execute_macros_node(state: VassalOpsState) -> Dict:
     print("\n[VassalOps] [ToolRouter] Dispatching approved automation steps...")
@@ -248,6 +349,15 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
         if action_type == "run_backup":
             mcp_result = tool_router.call_tool("run_backup")
             print(f" [ToolRouter] {mcp_result['message']}")
+        elif action_type == "agent_loop":
+            report = run_approved_agent_loop(str(payload), ocr_text=state.get("captured_context") or "")
+            print(f" [AgentLoop] {report}")
+            if report.get("final"):
+                print(f"[VassalOps Output] {report['final']}")
+            if report.get("report_path"):
+                print(f"[VassalOps Output] Report saved: {report['report_path']}")
+            if report.get("stopped") or run_controller.stop_requested():
+                break
         elif action_type == "sort_intel":
             mcp_result = tool_router.call_tool("sort_intel")
             print(f" [ToolRouter] {mcp_result['message']}")
@@ -338,6 +448,13 @@ class VassalOpsAPI:
         # Instant read-only duty helpers (no bot-sitter needed)
         if "list duties" in cleaned or cleaned in ("duties", "show duties", "my duties"):
             return duty_library.format_duty_list()
+        if cleaned in ("resume", "resume last", "resume session", "continue last"):
+            session = load_last_session()
+            ctx = format_resume_context(session)
+            if not ctx:
+                return "No saved session yet. Approve a goal first; then you can say resume."
+            user_input = ctx + "\n\nUser: continue the prior goal."
+            cleaned = user_input.lower().strip()
         if "import demo" in cleaned or "import pack" in cleaned or cleaned in ("demo pack", "import demo pack"):
             result = duty_library.import_demo_packs()
             if not result.get("ok"):
@@ -418,12 +535,15 @@ class VassalOpsAPI:
             current_state = vassalops_engine.get_state(config).values
             proposed = current_state.get("proposed_actions") or []
             readable = narrate_proposed_actions(proposed)
+            summary = risk_summary(proposed)
+            annotated = annotate_steps(proposed)
             return json.dumps({
                 "status": "pending_approval",
                 "thread_id": thread_id,
-                "proposed_actions": proposed,
+                "proposed_actions": annotated,
                 "readable_steps": readable,
-                "message": "Review the plan in plain English, then Approve or Reject."
+                "risk": summary,
+                "message": summary["message"] + " Review the plan in plain English, then Approve or Reject."
             })
         except Exception as e:
             return f"Error executing action: {str(e)}"
@@ -447,6 +567,8 @@ class VassalOpsAPI:
 
             current_state["approval_status"] = "approved"
             readable = narrate_proposed_actions(proposed)
+            if any(str(s.get("type")) == "agent_loop" for s in proposed):
+                readable = [f"Turn {i}/8 of approved agent loop" for i in range(1, 9)]
             run_controller.reset_for_run(readable, phase="approved_plan")
 
             def _run():
@@ -460,7 +582,7 @@ class VassalOpsAPI:
                     run_controller.finish(False, str(exc))
 
             threading.Thread(target=_run, daemon=True).start()
-            return "Execution started. Watch the progress panel — use Stop if needed."
+            return "Execution started. Watch the progress panel — use Stop if needed. A redacted report will be saved under storage/runs/."
         except Exception as e:
             return f"Error confirming plan: {str(e)}"
 
@@ -501,6 +623,26 @@ class VassalOpsAPI:
                 err = ""
                 if report.get("stopped_early"):
                     err = "Stopped early due to failure (work PC safety policy)."
+                obs = []
+                for r in report.get("results") or []:
+                    status = "OK" if r.get("ok") else f"FAIL ({r.get('error', 'error')})"
+                    obs.append(f"{r.get('name') or r.get('duty_id')}: {status}")
+                path = write_run_report(
+                    goal="playlist:" + ",".join(selected or []),
+                    ok=ok,
+                    turns=len(obs),
+                    observations=obs,
+                    final=err or ("playlist complete" if ok else "playlist failed"),
+                    reason=err,
+                    kind="playlist",
+                )
+                record_loop_outcome(
+                    os.path.join("storage", "agent.md"),
+                    {"ok": ok, "reason": err or ("ok" if ok else "playlist failed"), "observations": obs, "turns": len(obs)},
+                    goal="playlist",
+                )
+                save_last_session(goal="playlist", observations=obs, final=err, ok=ok)
+                print(f"[VassalOps Output] Report saved: {path}")
                 snap = run_controller.snapshot()
                 if snap.get("status") not in ("done", "stopped"):
                     run_controller.finish(ok, err)

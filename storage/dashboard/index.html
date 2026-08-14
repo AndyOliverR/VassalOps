@@ -8,8 +8,8 @@
 </head>
 <body>
     <div class="top-nav-bar">
-        <button class="duties-btn" id="toggleDutiesBtn" title="Daily Duties">Daily Duties</button>
-        <button class="settings-gear-btn" id="toggleSettingsBtn" title="Open Customization Settings">Settings</button>
+        <button class="duties-btn" id="toggleDutiesBtn" title="Daily Duties"><span class="ui-icon ui-icon-list" aria-hidden="true"></span>Daily Duties</button>
+        <button class="settings-gear-btn" id="toggleSettingsBtn" title="Open Customization Settings"><span class="ui-icon ui-icon-gear" aria-hidden="true"></span>Settings</button>
     </div>
 
     <div class="duties-panel" id="dutiesPanel">
@@ -17,10 +17,10 @@
         <p class="duties-hint" id="dutiesHint">Teach with: teach morning email — then build my workday</p>
         <div id="dutiesList" class="duties-list"></div>
         <div class="duties-actions">
-            <button type="button" class="approve-btn" id="approvePlaylistBtn">Approve today's run</button>
-            <button type="button" class="reject-btn" id="skipPlaylistBtn">Skip</button>
+            <button type="button" class="approve-btn" id="approvePlaylistBtn"><span class="ui-icon ui-icon-check" aria-hidden="true"></span>Approve today's run</button>
+            <button type="button" class="reject-btn" id="skipPlaylistBtn"><span class="ui-icon ui-icon-forward" aria-hidden="true"></span>Skip</button>
             <button type="button" class="reject-btn" id="refreshDutiesBtn">Refresh</button>
-            <button type="button" class="reject-btn" id="closeDutiesBtn">Close</button>
+            <button type="button" class="reject-btn" id="closeDutiesBtn"><span class="ui-icon ui-icon-xmark" aria-hidden="true"></span>Close</button>
         </div>
         <pre class="duties-status" id="dutiesStatus"></pre>
     </div>
@@ -45,17 +45,20 @@
 
     <div id="runProgressPanel" class="run-progress-panel hidden">
         <div class="run-progress-header">
-            <strong id="runProgressTitle">Running…</strong>
-            <button type="button" class="stop-btn" id="stopRunBtn">Stop</button>
+            <div class="run-progress-title-row">
+                <span class="ui-icon ui-icon-play" id="runProgressIcon" aria-hidden="true"></span>
+                <strong id="runProgressTitle">Running…</strong>
+            </div>
+            <button type="button" class="stop-btn" id="stopRunBtn"><span class="ui-icon ui-icon-stop" aria-hidden="true"></span>Stop</button>
         </div>
         <div id="runProgressLabel" class="run-progress-label"></div>
         <div class="run-progress-bar"><div id="runProgressFill" class="run-progress-fill"></div></div>
         <div id="stuckBox" class="stuck-box hidden">
-            <p id="stuckReason"></p>
+            <p class="stuck-reason-row"><span class="ui-icon ui-icon-alert" aria-hidden="true"></span><span id="stuckReason"></span></p>
             <p id="stuckHint" class="stuck-hint"></p>
             <div class="duties-actions">
-                <button type="button" class="approve-btn" id="continueRunBtn">Continue</button>
-                <button type="button" class="reject-btn" id="skipStuckBtn">Skip step</button>
+                <button type="button" class="approve-btn" id="continueRunBtn"><span class="ui-icon ui-icon-play" aria-hidden="true"></span>Continue</button>
+                <button type="button" class="reject-btn" id="skipStuckBtn"><span class="ui-icon ui-icon-forward" aria-hidden="true"></span>Skip step</button>
             </div>
         </div>
     </div>

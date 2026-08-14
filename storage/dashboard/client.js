@@ -145,6 +145,19 @@ clearBgBtn.addEventListener('click', () => {
     document.body.style.backgroundImage = 'none';
 });
 
+function makeIcon(name) {
+    const el = document.createElement('span');
+    el.className = 'ui-icon ui-icon-' + name;
+    el.setAttribute('aria-hidden', 'true');
+    return el;
+}
+
+function setButtonIconLabel(btn, iconName, label) {
+    btn.textContent = '';
+    btn.appendChild(makeIcon(iconName));
+    btn.appendChild(document.createTextNode(label));
+}
+
 function appendMessage(sender, text, isUser) {
     const container = document.createElement('div');
     container.className = 'msg-container';
@@ -214,14 +227,33 @@ function appendApprovalBlock(plan) {
     intro.textContent = plan.message || 'Review the proposed steps, then Approve or Reject.';
     textRow.appendChild(intro);
 
+    if (plan.risk && plan.risk.has_desktop) {
+        const riskNote = document.createElement('div');
+        riskNote.className = 'risk-desktop';
+        riskNote.appendChild(makeIcon('desktop'));
+        riskNote.appendChild(document.createTextNode(
+            'Desktop (' + (plan.risk.desktop_count || 0) + ' write) · read (' + (plan.risk.read_count || 0) + '). Desktop tools run only after Approve.'
+        ));
+        textRow.appendChild(riskNote);
+    } else if (plan.risk && (plan.risk.read_count || 0) > 0) {
+        const riskNote = document.createElement('div');
+        riskNote.className = 'risk-desktop';
+        riskNote.appendChild(makeIcon('eye'));
+        riskNote.appendChild(document.createTextNode(
+            'Read (' + (plan.risk.read_count || 0) + '). No desktop writes in this plan.'
+        ));
+        textRow.appendChild(riskNote);
+    }
+
     const list = document.createElement('ul');
     list.className = 'approval-step-list';
     const readable = Array.isArray(plan.readable_steps) ? plan.readable_steps : null;
     const steps = Array.isArray(plan.proposed_actions) ? plan.proposed_actions : [];
     if (readable && readable.length) {
-        readable.forEach((line) => {
+        readable.forEach((line, idx) => {
             const li = document.createElement('li');
-            li.textContent = line;
+            const risk = steps[idx] && steps[idx].risk ? String(steps[idx].risk) : '';
+            li.textContent = (risk ? '[' + risk + '] ' : '') + line;
             list.appendChild(li);
         });
     } else if (steps.length === 0) {
@@ -245,12 +277,12 @@ function appendApprovalBlock(plan) {
     const approveBtn = document.createElement('button');
     approveBtn.type = 'button';
     approveBtn.className = 'approve-btn';
-    approveBtn.textContent = 'Approve';
+    setButtonIconLabel(approveBtn, 'check', 'Approve');
 
     const rejectBtn = document.createElement('button');
     rejectBtn.type = 'button';
     rejectBtn.className = 'reject-btn';
-    rejectBtn.textContent = 'Reject';
+    setButtonIconLabel(rejectBtn, 'xmark', 'Reject');
 
     const disableButtons = () => {
         approveBtn.disabled = true;
@@ -324,7 +356,7 @@ runButton.addEventListener('click', handleSend);
 inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 
 const runProgressPanel = document.getElementById('runProgressPanel');
-const runProgressTitle = document.getElementById('runProgressTitle');
+const runProgressIcon = document.getElementById('runProgressIcon');
 const runProgressLabel = document.getElementById('runProgressLabel');
 const runProgressFill = document.getElementById('runProgressFill');
 const stuckBox = document.getElementById('stuckBox');
@@ -365,16 +397,24 @@ async function refreshRunProgress() {
         runProgressFill.style.width = pct + '%';
         runProgressLabel.textContent = p.label || '';
         if (status === 'paused') {
+            runProgressIcon.className = 'ui-icon ui-icon-alert';
             runProgressTitle.textContent = 'Paused — need you';
             stuckBox.classList.remove('hidden');
             stuckReason.textContent = p.stuck_reason || 'Automation is stuck.';
             stuckHint.textContent = p.stuck_hint || '';
         } else {
             stuckBox.classList.add('hidden');
-            if (status === 'running') runProgressTitle.textContent = 'Running… (' + cur + '/' + total + ')';
-            if (status === 'stopped') runProgressTitle.textContent = 'Stopped';
+            if (status === 'running') {
+                runProgressIcon.className = 'ui-icon ui-icon-play';
+                runProgressTitle.textContent = 'Running… (' + cur + '/' + total + ')';
+            }
+            if (status === 'stopped') {
+                runProgressIcon.className = 'ui-icon ui-icon-stop';
+                runProgressTitle.textContent = 'Stopped';
+            }
             if (status === 'done' || status === 'stopped') {
                 if (status === 'done') {
+                    runProgressIcon.className = p.ok ? 'ui-icon ui-icon-check' : 'ui-icon ui-icon-xmark';
                     runProgressTitle.textContent = p.ok ? 'Finished' : ('Failed' + (p.last_error ? ': ' + p.last_error : ''));
                 }
                 if (!reportedRunEnd) {

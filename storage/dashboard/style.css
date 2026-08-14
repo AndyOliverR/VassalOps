@@ -1,7 +1,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI Semibold', 'Segoe UI', sans-serif; }
 body { background: #1A202C; background-size: cover; background-position: center; color: #E2E8F0; padding: 40px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; }
 .top-nav-bar { position: absolute; top: 20px; right: 25px; display: flex; align-items: center; gap: 10px; z-index: 10; }
-.settings-gear-btn, .duties-btn { background: #2D3748; border: 1px solid #4A5568; border-radius: 8px; font-size: 13px; font-weight: 700; color: #E2E8F0; cursor: pointer; padding: 8px 12px; }
+.settings-gear-btn, .duties-btn { background: #2D3748; border: 1px solid #4A5568; border-radius: 8px; font-size: 13px; font-weight: 700; color: #E2E8F0; cursor: pointer; padding: 8px 12px; display: inline-flex; align-items: center; gap: 6px; }
 .settings-gear-btn:hover, .duties-btn:hover { color: #FFFFFF; background: #4A5568; }
 .duties-panel { position: absolute; top: 0; right: -360px; width: 340px; height: 100vh; background: #2D3748; z-index: 110; padding: 28px 18px; transition: right 0.25s cubic-bezier(0.1, 0.9, 0.2, 1); display: flex; flex-direction: column; gap: 14px; }
 .duties-panel.open { right: 0; }
@@ -41,7 +41,18 @@ body { background: #1A202C; background-size: cover; background-position: center;
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 .approval-step-list { margin: 10px 0 12px 18px; padding: 0; list-style: disc; color: #CBD5E0; font-size: 14px; line-height: 1.45; }
 .approval-actions { display: flex; gap: 10px; margin-top: 8px; }
-.approve-btn, .reject-btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ui-icon { width: 16px; height: 16px; display: inline-block; flex-shrink: 0; background-color: currentColor; -webkit-mask: var(--ui-icon) no-repeat center / contain; mask: var(--ui-icon) no-repeat center / contain; vertical-align: -2px; }
+.ui-icon-list { --ui-icon: url("assets/icons/list-outline.svg"); }
+.ui-icon-gear { --ui-icon: url("assets/icons/gear-outline.svg"); }
+.ui-icon-check { --ui-icon: url("assets/icons/checkmark-circle-outline.svg"); }
+.ui-icon-xmark { --ui-icon: url("assets/icons/xmark-outline.svg"); }
+.ui-icon-stop { --ui-icon: url("assets/icons/media-stop-outline.svg"); }
+.ui-icon-play { --ui-icon: url("assets/icons/media-play-outline.svg"); }
+.ui-icon-forward { --ui-icon: url("assets/icons/media-forward-outline.svg"); }
+.ui-icon-alert { --ui-icon: url("assets/icons/alert-triangle-outline.svg"); }
+.ui-icon-desktop { --ui-icon: url("assets/icons/desktop-outline.svg"); }
+.ui-icon-eye { --ui-icon: url("assets/icons/eye-outline.svg"); }
+.approve-btn, .reject-btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .approve-btn { background: #319795; color: #FFFFFF; }
 .approve-btn:hover { background: #234E52; }
 .approve-btn:disabled { opacity: 0.5; cursor: default; }
@@ -51,6 +62,10 @@ body { background: #1A202C; background-size: cover; background-position: center;
 .run-progress-panel { position: absolute; left: 40px; right: 40px; bottom: 88px; z-index: 120; background: #2D3748; border: 1px solid #4A5568; border-radius: 12px; padding: 14px 16px; box-shadow: 0 12px 28px rgba(0,0,0,0.45); }
 .run-progress-panel.hidden { display: none; }
 .run-progress-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; color: #81E6D9; }
+.run-progress-title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.stop-btn { display: inline-flex; align-items: center; gap: 6px; }
+.stuck-reason-row { display: flex; align-items: flex-start; gap: 8px; color: #FEB2B2; }
+.stuck-reason-row .ui-icon { margin-top: 2px; }
 .run-progress-label { font-size: 13px; color: #E2E8F0; margin-bottom: 8px; min-height: 1.2em; }
 .run-progress-bar { height: 8px; background: #1A202C; border-radius: 999px; overflow: hidden; }
 .run-progress-fill { height: 100%; width: 0%; background: #319795; transition: width 0.2s ease; }
@@ -59,3 +74,4 @@ body { background: #1A202C; background-size: cover; background-position: center;
 .stuck-box { margin-top: 12px; padding: 10px; background: #1A202C; border-radius: 8px; border: 1px solid #C53030; }
 .stuck-box.hidden { display: none; }
 .stuck-hint { font-size: 12px; color: #A0AEC0; margin: 6px 0 10px; }
+.risk-desktop { font-size: 12px; color: #FBD38D; margin: 8px 0 4px; display: flex; align-items: flex-start; gap: 6px; }

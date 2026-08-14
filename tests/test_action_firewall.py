@@ -31,6 +31,12 @@ class TestActionFirewall(unittest.TestCase):
         self.assertEqual(self.fw.verify_step({"type": "run_duty", "payload": "email"} )["status"], "VERIFIED")
         self.assertEqual(self.fw.verify_step({"type": "run_playlist", "payload": "today"} )["status"], "VERIFIED")
 
+    def test_allows_agent_loop_and_memory(self):
+        self.assertEqual(self.fw.verify_step({"type": "agent_loop", "payload": "summarize in notepad"})["status"], "VERIFIED")
+        self.assertEqual(self.fw.verify_step({"type": "search_memory", "payload": "email"})["status"], "VERIFIED")
+        self.assertEqual(self.fw.verify_step({"type": "list_duties", "payload": ""})["status"], "VERIFIED")
+        self.assertEqual(self.fw.verify_step({"type": "agent_loop", "payload": ""})["status"], "REJECTED")
+
     def test_rejects_multipart_press_key(self):
         result = self.fw.verify_step({"type": "press_key", "payload": "ctrl+c"})
         self.assertEqual(result["status"], "REJECTED")

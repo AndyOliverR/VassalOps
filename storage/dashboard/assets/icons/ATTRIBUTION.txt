@@ -1,0 +1,6 @@
+Icons in this folder are a subset of Glow Icons
+https://github.com/glow-ui/glow-icons
+https://glowui.com/icons
+
+MIT License. Copyright (c) 2025 glow-ui
+See LICENSE in this folder.

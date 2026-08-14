@@ -95,14 +95,16 @@ class VassalOpsMainDirectorAgent:
                     new_discoveries += 1
 
         if new_discoveries > 0:
-            try:
-                with open(self.memory_path, "a", encoding="utf-8") as f:
-                    f.write(f"\n\n## Autonomously Learned Skill Properties ({time.strftime('%Y-%m-%d')})\n")
-                    f.write("- AUTO_LATENCY_DELAY_PADDING: Enabled due to anomaly trends detected in audit ledger during sleeptime compute.\n")
-                    f.write(f"- AUDIT_ANOMALIES_REVIEWED: {new_discoveries}\n")
-                return "Memory Optimization Successful: Dynamic skill padding appended to your agent.md file configuration."
-            except Exception as e:
-                return f"Memory Loop Bottleneck: {str(e)}"
+            from src.execution.local_learning import append_unique_bullets
+            n = append_unique_bullets(
+                self.memory_path,
+                "## Preferences",
+                [
+                    "AUTO_LATENCY_DELAY_PADDING: Enabled due to audit ledger anomaly trends",
+                    "skip if window missing: pause and ask human (do not smash clicks)",
+                ],
+            )
+            return f"Memory Optimization Successful: {n} unique preference line(s) recorded."
         return "Sleep-time trace analysis pass completed. No memory modifications required."
 
     def run_agent_health_check(self) -> str:

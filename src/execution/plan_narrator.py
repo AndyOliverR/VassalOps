@@ -21,6 +21,9 @@ ACTION_LABELS = {
     "extract_intel": "Extract entities",
     "focus_window": "Focus window",
     "click_landmark": "Click on-screen landmark",
+    "agent_loop": "Run bounded agent loop",
+    "search_memory": "Search duties / notes / audit",
+    "list_duties": "List taught duties",
 }
 
 

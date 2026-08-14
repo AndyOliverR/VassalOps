@@ -19,3 +19,5 @@ venv/
 *.egg-info/
 
 src/ingestion/cache/
+storage/runs/*.md
+storage/sessions/*.json

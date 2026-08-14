@@ -4,6 +4,7 @@ pywebview>=5.0
 requests>=2.31.0
 langgraph>=0.2.0
 langchain>=0.3.0
+pydantic>=2.0.0
 keyboard>=0.13.5
 pyperclip>=1.8.2
 websockets>=12.0
