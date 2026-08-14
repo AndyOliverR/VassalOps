@@ -1,6 +1,6 @@
 pyautogui>=0.9.54
 pynput>=1.7.6
-pywebview>=5.0
+pywebview>=6.2.1
 requests>=2.31.0
 langgraph>=0.2.0
 langchain>=0.3.0
