@@ -203,6 +203,18 @@ if (Test-Path $icon) { $sc.IconLocation = $icon }
 $sc.Save()
 Write-Host "Shortcut: $shortcutPath -> $target"
 
+Write-Step "Brand splash (walk / somersault)"
+$splashPy = Join-Path $Root "tools\show_splash.py"
+if (Test-Path $splashPy) {
+    try {
+        & $python @pythonArgsPrefix $splashPy
+    } catch {
+        Write-Host "Splash skipped: $($_.Exception.Message)"
+    }
+} else {
+    Write-Host "Splash helper missing; continuing."
+}
+
 Write-Host ""
 Write-Host "Antivirus tip: If K7/Defender quarantines teach/replay or a built EXE, add a folder exclusion for:" -ForegroundColor Yellow
 Write-Host "  $Root"

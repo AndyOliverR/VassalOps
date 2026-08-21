@@ -11,6 +11,8 @@
 
 Local-first **Windows** desktop agent: a pywebview control panel, LangGraph planning, local Ollama, and pyautogui automation — with a human **bot-sitter Approve gate** before mouse/keyboard actions run.
 
+Brand mark and splash animation use an **original** VassalOps SVG (see `storage/dashboard/assets/BRANDING.txt`) — not stock art.
+
 Data stays on your machine by default. Optional network features bind to **localhost** and require a shared token.
 
 ---
@@ -31,8 +33,8 @@ Data stays on your machine by default. Optional network features bind to **local
 
 1. Download **`VassalOps-*.zip`** from [Releases](https://github.com/AndyOliverR/VassalOps/releases/latest)
 2. Unzip to a simple folder (e.g. `C:\VassalOps`)
-3. Double-click **`INSTALL.bat`** once — it installs Python/Ollama via winget when missing, packages, and a Desktop shortcut
-4. When the “VassalOps Ready” dialog appears, click the **VassalOps** icon on your Desktop
+3. Double-click **`INSTALL.bat`** once — it installs Python/Ollama via winget when missing, packages, a Desktop shortcut, and a short brand splash
+4. When the “VassalOps Ready” dialog appears, click the **VassalOps** icon on your Desktop (every open plays the brand splash)
 
 Windows cannot auto-run code just from unzipping (by design). `INSTALL.bat` is the one intentional click.
 

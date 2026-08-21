@@ -668,6 +668,22 @@ class VassalOpsAPI:
         daily_playlist.build_workday_from_all_duties()
         return "Imported: " + (", ".join(ids) if ids else "(none)")
 
+    def _splash_flag_path(self) -> str:
+        return os.path.join("storage", "splash_seen.json")
+
+    def should_show_splash(self) -> bool:
+        """Always show brand splash on UI load (walk / somersault)."""
+        return True
+
+    def mark_splash_seen(self) -> dict:
+        """Record last splash time (splash still plays every launch)."""
+        path = self._splash_flag_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        payload = {"seen": True, "every_launch": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+        return payload
+
 def force_win32_window_icon():
     """Win32 Kernel Hack: Forces Windows to paint vassal_icon.ico onto the title bar frame directly."""
     import ctypes

@@ -43,6 +43,7 @@ jobs:
             --exclude='storage/app_stderr.log' \
             --exclude='storage/_dep_check.py' \
             --exclude='storage/runs' \
+            --exclude='storage/splash_seen.json' \
             ./ "$STAGING/"
           (
             cd "$STAGING"

@@ -454,6 +454,34 @@ skipStuckBtn.addEventListener('click', async () => {
     }
 });
 
-window.addEventListener('load', () => {
-    appendMessage('VassalOps', 'Hello! This is your PC workday runner.\n• Demo: import demo pack → run duty demo notepad hello (or demo calculator one plus one) → Approve\n• Real work: teach morning email → build my workday → Daily Duties → Approve today\'s run\nTaught by you, approved by you, run locally.', false);
+window.addEventListener('load', async () => {
+    const overlay = document.getElementById('splashOverlay');
+    const finishWelcome = () => {
+        appendMessage('VassalOps', 'Hello! This is your PC workday runner.\n• Demo: import demo pack → run duty demo notepad hello (or demo calculator one plus one) → Approve\n• Real work: teach morning email → build my workday → Daily Duties → Approve today\'s run\nTaught by you, approved by you, run locally.', false);
+    };
+
+    // Brand splash every launch — walk / somersault / settle (fun layer; Desktop .ico stays static)
+    if (!overlay) {
+        finishWelcome();
+        return;
+    }
+
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ms = reduced ? 900 : 3400;
+    setTimeout(async () => {
+        const stage = document.getElementById('splashStage');
+        if (stage) stage.classList.add('fade-out');
+        setTimeout(async () => {
+            overlay.classList.add('hidden');
+            overlay.setAttribute('aria-hidden', 'true');
+            try {
+                if (window.pywebview && window.pywebview.api && window.pywebview.api.mark_splash_seen) {
+                    await window.pywebview.api.mark_splash_seen();
+                }
+            } catch (e) { /* optional flag */ }
+            finishWelcome();
+        }, 450);
+    }, ms);
 });

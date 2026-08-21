@@ -1,0 +1,9 @@
+Original VassalOps brand mark
+=============================
+
+storage/dashboard/assets/vassal_mark.svg — original vector character and badge
+storage/dashboard/vassal_icon.png / vassal_icon.ico — raster exports of that mark
+
+These assets are project-owned original artwork created for VassalOps
+(not stock photography or Shutterstock derivatives). Licensed under the
+same MIT license as the repository.
