@@ -52,7 +52,9 @@ html, body {
   image-rendering: auto;
   -webkit-user-drag: none;
   user-select: none;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+  background: transparent;
+  /* soft glow only — no plate behind the knight */
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
 }
 
 .splash-title {
