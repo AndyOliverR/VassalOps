@@ -27,22 +27,33 @@ Data stays on your machine by default. Optional network features bind to **local
 
 ## Install
 
-**Prerequisites:** [Python 3.11+](https://www.python.org/downloads/) (Add to PATH) and [Ollama](https://ollama.com/).
+**New PC / friend (easiest):**
 
-**Windows (recommended one-shot):**
+1. Download **`VassalOps-*.zip`** from [Releases](https://github.com/AndyOliverR/VassalOps/releases/latest)
+2. Unzip to a simple folder (e.g. `C:\VassalOps`)
+3. Double-click **`INSTALL.bat`** once — it installs Python/Ollama via winget when missing, packages, and a Desktop shortcut
+4. When the “VassalOps Ready” dialog appears, click the **VassalOps** icon on your Desktop
+
+Windows cannot auto-run code just from unzipping (by design). `INSTALL.bat` is the one intentional click.
+
+**From a git clone** (same installer):
 
 ```powershell
-# From the VassalOps folder after clone/unzip
-powershell -ExecutionPolicy Bypass -File .\install_vassalops.ps1
+# Inside the VassalOps folder
+.\INSTALL.bat
 ```
 
-That installs packages, checks Ollama, and creates a Desktop shortcut to `bootstrap_and_run.bat`.
+Or: `powershell -ExecutionPolicy Bypass -File .\install_vassalops.ps1`
 
-**Or launch directly:**
+If winget cannot install Python/Ollama, the installer opens the download pages; install those, then run `INSTALL.bat` again.
+
+**Already installed — just launch:**
 
 ```bat
 bootstrap_and_run.bat
 ```
+
+(or the Desktop shortcut)
 
 **Updates:** On launch, VassalOps checks [GitHub Releases](https://github.com/AndyOliverR/VassalOps/releases) and asks before applying. Duties, teach memory, and `config.json` are kept; dashboard + demo packs refresh. Set `VASSALOPS_SKIP_UPDATE=1` to disable. Maintainers: bump `VERSION`, commit, tag `vX.Y.Z` matching that file — CI publishes `VassalOps-X.Y.Z.zip`.
 
@@ -126,7 +137,7 @@ Security practices for local agents are inspired by community guidance (includin
 
 | Goal | Start here |
 |------|------------|
-| Install & run on Windows | [Install](#install), `install_vassalops.ps1` |
+| Install & run on Windows | [Install](#install), `INSTALL.bat` |
 | 60-second demo | [Quick start](#quick-start), `storage/duties/packs/` |
 | Train Daily Duties | [Quick start](#quick-start) → train section |
 | Antivirus false positives | [below](#antivirus-false-positives-k7-windows-defender-etc) |

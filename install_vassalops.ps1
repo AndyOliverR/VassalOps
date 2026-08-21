@@ -1,5 +1,6 @@
-# First-run installer for lay users: deps, Ollama check, fallback model, Desktop shortcut.
-# Run once:  Right-click → Run with PowerShell   OR   powershell -ExecutionPolicy Bypass -File install_vassalops.ps1
+# First-run installer for lay users: Python/Ollama (winget), deps, model, Desktop shortcut.
+# Preferred entry: double-click INSTALL.bat
+# Or: powershell -ExecutionPolicy Bypass -File install_vassalops.ps1
 $ErrorActionPreference = "Continue"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Root
@@ -9,21 +10,111 @@ function Write-Step([string]$Message) {
     Write-Host "==> $Message" -ForegroundColor Cyan
 }
 
+function Show-DoneDialog([string]$ShortcutPath) {
+    $msg = "Install complete.`n`nDouble-click the VassalOps icon on your Desktop to start.`n`nShortcut:`n$ShortcutPath"
+    try {
+        Add-Type -AssemblyName System.Windows.Forms | Out-Null
+        [System.Windows.Forms.MessageBox]::Show(
+            $msg,
+            "VassalOps Ready",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Information
+        ) | Out-Null
+    } catch {
+        Write-Host $msg -ForegroundColor Green
+    }
+}
+
+function Refresh-PathEnv {
+    $machine = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+    $user = [System.Environment]::GetEnvironmentVariable("Path", "User")
+    $env:Path = "$machine;$user"
+}
+
+function Test-WingetAvailable {
+    return [bool](Get-Command winget -ErrorAction SilentlyContinue)
+}
+
+function Install-WithWinget([string]$PackageId, [string]$DisplayName) {
+    if (-not (Test-WingetAvailable)) { return $false }
+    Write-Step "Installing $DisplayName via winget ($PackageId)..."
+    Write-Host "This may take a few minutes. Approve any Windows prompts."
+    $args = @(
+        "install", "-e", "--id", $PackageId,
+        "--accept-package-agreements", "--accept-source-agreements",
+        "--disable-interactivity"
+    )
+    & winget @args
+    Refresh-PathEnv
+    return ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335189) # already installed
+}
+
+function Resolve-Python {
+    Refresh-PathEnv
+    $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+    if ($pythonCmd -and $pythonCmd.Source -notmatch 'WindowsApps\\python\.exe$') {
+        return @{ Exe = $pythonCmd.Source; ArgsPrefix = @() }
+    }
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pyLauncher) {
+        return @{ Exe = $pyLauncher.Source; ArgsPrefix = @("-3") }
+    }
+    $candidates = @(
+        "$env:LocalAppData\Programs\Python\Python312\python.exe",
+        "$env:LocalAppData\Programs\Python\Python311\python.exe",
+        "$env:LocalAppData\Programs\Python\Python313\python.exe",
+        "C:\Program Files\Python312\python.exe",
+        "C:\Program Files\Python311\python.exe"
+    )
+    foreach ($c in $candidates) {
+        if (Test-Path $c) { return @{ Exe = $c; ArgsPrefix = @() } }
+    }
+    return $null
+}
+
+function Resolve-Ollama {
+    Refresh-PathEnv
+    $cmd = Get-Command ollama -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    $candidates = @(
+        "$env:LocalAppData\Programs\Ollama\ollama.exe",
+        "$env:ProgramFiles\Ollama\ollama.exe"
+    )
+    foreach ($c in $candidates) {
+        if (Test-Path $c) { return $c }
+    }
+    return $null
+}
+
 Write-Step "VassalOps install starting in $Root"
 
-# Python
-$python = $null
-$pythonArgsPrefix = @()
-$pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-$pyLauncher = Get-Command py -ErrorAction SilentlyContinue
-if ($pythonCmd) { $python = $pythonCmd.Source }
-elseif ($pyLauncher) { $python = $pyLauncher.Source; $pythonArgsPrefix = @("-3") }
+# --- Python ---
+$py = Resolve-Python
+if (-not $py) {
+    $ok = Install-WithWinget "Python.Python.3.12" "Python 3.12"
+    Start-Sleep -Seconds 2
+    Refresh-PathEnv
+    $py = Resolve-Python
+    if (-not $py -and $ok) {
+        # winget sometimes needs a new shell for PATH; probe common paths again
+        Start-Sleep -Seconds 2
+        $py = Resolve-Python
+    }
+}
 
-if (-not $python) {
-    Write-Host "Python 3.11+ is required. Download: https://www.python.org/downloads/ (check Add to PATH)." -ForegroundColor Red
+if (-not $py) {
+    Write-Host ""
+    Write-Host "Python 3.11+ is still missing." -ForegroundColor Red
+    Write-Host "Install from https://www.python.org/downloads/ (check 'Add python.exe to PATH'), then run INSTALL.bat again."
+    try {
+        Start-Process "https://www.python.org/downloads/"
+    } catch {}
     exit 1
 }
-Write-Host "Python: $python"
+
+$python = $py.Exe
+$pythonArgsPrefix = $py.ArgsPrefix
+Write-Host "Python: $python $($pythonArgsPrefix -join ' ')"
 
 Write-Step "Installing Python packages from requirements.txt"
 & $python @pythonArgsPrefix -m pip install -r (Join-Path $Root "requirements.txt") --user
@@ -32,18 +123,27 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Ollama
+# --- Ollama ---
 Write-Step "Checking Ollama"
-$ollamaCmd = Get-Command ollama -ErrorAction SilentlyContinue
-if (-not $ollamaCmd) {
-    Write-Host "Ollama not found on PATH. Install from https://ollama.com/ then re-run this installer." -ForegroundColor Yellow
+$ollamaPath = Resolve-Ollama
+if (-not $ollamaPath) {
+    $null = Install-WithWinget "Ollama.Ollama" "Ollama"
+    Start-Sleep -Seconds 3
+    Refresh-PathEnv
+    $ollamaPath = Resolve-Ollama
+}
+
+if (-not $ollamaPath) {
+    Write-Host "Ollama not found. Opening https://ollama.com/ — install it, then run INSTALL.bat again." -ForegroundColor Yellow
+    try { Start-Process "https://ollama.com/" } catch {}
 } else {
+    Write-Host "Ollama: $ollamaPath"
     try {
         $null = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -UseBasicParsing -TimeoutSec 2
     } catch {
         Write-Host "Starting ollama serve..."
-        Start-Process -FilePath $ollamaCmd.Source -ArgumentList "serve" -WindowStyle Hidden
-        Start-Sleep -Seconds 3
+        Start-Process -FilePath $ollamaPath -ArgumentList "serve" -WindowStyle Hidden
+        Start-Sleep -Seconds 4
     }
 
     $configPath = Join-Path $Root "config.json"
@@ -62,7 +162,7 @@ if (-not $ollamaCmd) {
 
     if ($names -notcontains $activeModel) {
         Write-Step "Pulling model '$activeModel' (may take a while)..."
-        & $ollamaCmd.Source pull $activeModel
+        & $ollamaPath pull $activeModel
         $tags = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 5
         $names = @($tags.models | ForEach-Object { $_.name })
     }
@@ -70,7 +170,7 @@ if (-not $ollamaCmd) {
     if ($names -notcontains $activeModel) {
         $fallback = "llama3.2"
         Write-Host "Configured model missing. Trying fallback '$fallback'..."
-        & $ollamaCmd.Source pull $fallback
+        & $ollamaPath pull $fallback
         $tags = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 5
         $names = @($tags.models | ForEach-Object { $_.name })
         if ($names -contains $fallback -and (Test-Path $configPath)) {
@@ -108,11 +208,13 @@ Write-Host "Antivirus tip: If K7/Defender quarantines teach/replay or a built EX
 Write-Host "  $Root"
 Write-Host "Prefer this .bat shortcut; do not rely on an unsigned VassalOps.exe for daily use."
 
-Write-Step "Optional developer packaging only"
-Write-Host "  (Skip for normal use.) powershell -ExecutionPolicy Bypass -File packaging\build_launcher.ps1"
-Write-Host "  Exclude this folder in AV before building, or PyInstaller output may be locked/quarantined."
-
 Write-Host ""
-Write-Host "Install complete. Double-click the Desktop VassalOps shortcut (or bootstrap_and_run.bat)." -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "  Install complete." -ForegroundColor Green
+Write-Host "  Click the VassalOps icon on your Desktop." -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
 Write-Host "On later launches, VassalOps may offer an update from GitHub Releases (your duties and config stay)."
 Write-Host "Marketing spine: Your PC's workday — taught by you, approved by you, run locally."
+
+Show-DoneDialog $shortcutPath
+exit 0
