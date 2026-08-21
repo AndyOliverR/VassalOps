@@ -29,7 +29,17 @@ VassalOps stands out when someone **sees** teach → Approve → run. Use either
 
 Until a GIF is committed, this markdown is the canonical demo script.
 
-## Train your workday (after the demo)
+## Path C — Sugar / Spice / Element X (robustness)
+
+After a successful Approve run, VassalOps stores a **Duty Reflex** under `storage/reflexes/` (window titles / landmarks that worked). The next similar goal injects that context — still **Approve before desktop**.
+
+During a run, watch the progress panel:
+
+- Live **checklist** (pending / running / done)
+- Plain-English **summary** when stuck or finished
+- Auto-retry before Pause (refocus window / re-OCR), then Continue / Skip / **Approve replan**
+
+Workspace coding-lite tools (`list_dir`, `read_file`, hermetic `run_unittest`) stay inside the VassalOps folder; `write_file` only after Approve.
 
 1. `teach morning email` → Approve → do the task → Escape  
 2. `build my workday`  

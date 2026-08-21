@@ -69,12 +69,14 @@ def run_agent_loop(
     *,
     call_model: Callable[[str], Any],
     execute_tool: Callable[[str, str], Dict[str, Any]],
-    max_turns: int = 8,
+    max_turns: int = 14,
     ocr_text: str = "",
     window_titles: Optional[List[str]] = None,
     playlist_items: Optional[List[Dict[str, Any]]] = None,
     stop_requested: Optional[Callable[[], bool]] = None,
     set_progress: Optional[Callable[[int, str], None]] = None,
+    reflex_block: str = "",
+    on_need_replan: Optional[Callable[[str, List[str]], None]] = None,
 ) -> Dict[str, Any]:
     """
     Think -> act -> observe until final, max turns, Stop, or a tool requests stop.
@@ -84,6 +86,8 @@ def run_agent_loop(
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Goal (already Approved): {goal_s}"},
     ]
+    if reflex_block:
+        messages.append({"role": "user", "content": reflex_block})
     last_error = ""
     observations: List[str] = []
     turns_used = 0
@@ -104,6 +108,7 @@ def run_agent_loop(
             window_titles=window_titles,
             playlist_items=playlist_items,
             last_error=last_error,
+            reflex_block=reflex_block if turn == 1 else "",
         )
         prompt = build_turn_prompt(messages, workspace, ocr_text)
         if set_progress:
@@ -189,10 +194,19 @@ def run_agent_loop(
                 "observations": observations,
             }
 
+    reason = f"Hit max_turns={max_turns} without a final answer."
+    if on_need_replan:
+        try:
+            on_need_replan(
+                "Turn budget reached. Approve a replan to continue this goal, or Stop.",
+                [f"Continue goal: {goal_s[:120]}"],
+            )
+        except Exception:
+            pass
     return {
         "ok": False,
         "stopped": False,
-        "reason": f"Hit max_turns={max_turns} without a final answer.",
+        "reason": reason,
         "turns": turns_used,
         "final": "",
         "observations": observations,

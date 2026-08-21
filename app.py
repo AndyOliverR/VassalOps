@@ -28,6 +28,7 @@ from src.execution.run_controller import run_controller
 from src.execution.landmark_target import focus_window_by_title, find_text_on_screen, list_window_titles
 from src.execution.agent_loop import run_agent_loop
 from src.execution.agent_tools import execute_loop_tool, cap_ocr
+from src.execution.duty_reflex import format_reflex_context, save_reflex
 from src.execution.structured_llm import PlannerPlan, call_ollama_json, complete_structured
 from src.execution.risk_tiers import annotate_steps, risk_summary
 from src.execution.run_evidence import write_run_report
@@ -292,18 +293,30 @@ def run_approved_agent_loop(goal: str, ocr_text: str = "") -> Dict:
             type_text=lambda p: operator_bridge.execute_text_input(p, press_enter=False),
             focus_window=focus_window_by_title,
             ledger=audit_ledger,
+            write_approved=True,  # already past human Approve for this loop
         )
+
+    reflex_block = format_reflex_context(goal=goal)
+    readable = [f"Agent turn {i}" for i in range(1, 15)]
+    run_controller.reset_for_run(readable, phase="agent_loop")
+    run_controller.set_summary(f"Working goal: {(goal or '')[:160]}")
+
+    def _on_replan(message: str, steps: list) -> None:
+        # Spice: surface second-Approve replan; do not auto-continue the loop.
+        run_controller.set_pending_replan(message, steps)
 
     report = run_agent_loop(
         goal,
         call_model=_ollama_generate_json,
         execute_tool=execute_tool,
-        max_turns=8,
+        max_turns=14,
         ocr_text=ocr_text,
         window_titles=titles,
         playlist_items=briefing.get("items"),
         stop_requested=run_controller.stop_requested,
         set_progress=lambda cur, label: run_controller.set_progress(cur, label),
+        reflex_block=reflex_block,
+        on_need_replan=_on_replan,
     )
     audit_ledger.commit_transaction(
         intent=f"agent_loop:{(goal or '')[:80]}",
@@ -328,6 +341,15 @@ def run_approved_agent_loop(goal: str, ocr_text: str = "") -> Dict:
         final=str(report.get("final") or ""),
         ok=bool(report.get("ok")),
     )
+    if report.get("ok"):
+        try:
+            save_reflex(goal=goal, observations=report.get("observations") or [])
+        except Exception as exc:
+            print(f"[DutyReflex] save failed: {exc}")
+    run_controller.set_summary(
+        str(report.get("final") or report.get("reason") or "")[:400]
+    )
+    run_controller.finish(bool(report.get("ok")), str(report.get("reason") or ""))
     return report
 
 
@@ -372,6 +394,15 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
         elif action_type == "run_duty":
             outcome = duty_library.run_duty(str(payload))
             print(f" [Duty] Run {payload}: {outcome}")
+            if outcome.get("ok"):
+                try:
+                    save_reflex(
+                        duty_id=str(payload),
+                        goal=f"run duty {payload}",
+                        observations=[str(outcome)],
+                    )
+                except Exception as exc:
+                    print(f"[DutyReflex] save failed: {exc}")
             if not outcome.get("ok"):
                 print(f" [Duty] FAILED: {outcome.get('error')}")
         elif action_type == "run_playlist":
@@ -600,6 +631,11 @@ class VassalOpsAPI:
     def skip_stuck_step(self) -> str:
         run_controller.skip_stuck_step()
         return "Skipping the stuck step."
+
+    def confirm_replan(self) -> str:
+        """Second Approve for a mid-run / max-turn replan suggestion (never silent)."""
+        run_controller.confirm_replan()
+        return "Replan approved. Continuing when the runner is waiting."
 
     def list_duties(self) -> list:
         """Returns taught duty summaries for the Daily Duties panel."""

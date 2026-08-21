@@ -44,6 +44,7 @@ jobs:
             --exclude='storage/_dep_check.py' \
             --exclude='storage/runs' \
             --exclude='storage/splash_seen.json' \
+            --exclude='storage/reflexes/*.json' \
             ./ "$STAGING/"
           (
             cd "$STAGING"

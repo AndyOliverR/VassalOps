@@ -63,13 +63,16 @@
             <button type="button" class="stop-btn" id="stopRunBtn"><span class="ui-icon ui-icon-stop" aria-hidden="true"></span>Stop</button>
         </div>
         <div id="runProgressLabel" class="run-progress-label"></div>
+        <div id="runProgressSummary" class="run-progress-summary"></div>
+        <ol id="runChecklist" class="run-checklist" aria-label="Run checklist"></ol>
         <div class="run-progress-bar"><div id="runProgressFill" class="run-progress-fill"></div></div>
         <div id="stuckBox" class="stuck-box hidden">
             <p class="stuck-reason-row"><span class="ui-icon ui-icon-alert" aria-hidden="true"></span><span id="stuckReason"></span></p>
             <p id="stuckHint" class="stuck-hint"></p>
-            <p class="stuck-hint">Bring the right window to the front if needed, then Continue — or Skip this step. Stop cancels the whole run.</p>
+            <p class="stuck-hint">Bring the right window to the front if needed, then Continue — or Skip this step. Stop cancels the whole run. A replan always needs a second Approve.</p>
             <div class="duties-actions">
                 <button type="button" class="approve-btn" id="continueRunBtn"><span class="ui-icon ui-icon-play" aria-hidden="true"></span>Continue</button>
+                <button type="button" class="approve-btn hidden" id="confirmReplanBtn"><span class="ui-icon ui-icon-check" aria-hidden="true"></span>Approve replan</button>
                 <button type="button" class="reject-btn" id="skipStuckBtn"><span class="ui-icon ui-icon-forward" aria-hidden="true"></span>Skip step</button>
             </div>
         </div>

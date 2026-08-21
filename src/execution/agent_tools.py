@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from typing import Any, Callable, Dict, List, Optional
+
+from src.execution.duty_reflex import find_reflexes, format_reflex_context
+from src.execution.workspace_files import list_workspace_dir, read_workspace_file, write_workspace_file
 
 
 TOOL_CATALOG: List[Dict[str, str]] = [
@@ -16,6 +20,19 @@ TOOL_CATALOG: List[Dict[str, str]] = [
     {"name": "speak_log", "description": "Record a short status note for the user (no desktop action).", "payload": "message"},
     {"name": "run_backup", "description": "Run the local backup tool.", "payload": "empty"},
     {"name": "search_memory", "description": "Keyword-search duties, agent.md preferences, and recent audit rows.", "payload": "search query"},
+    {"name": "search_reflex", "description": "Element X: search Duty Reflex memory from prior Approve successes.", "payload": "duty id or goal keywords"},
+    {"name": "list_dir", "description": "List files under the VassalOps workspace (relative path only).", "payload": "relative dir (default .)"},
+    {"name": "read_file", "description": "Read a text file under the VassalOps workspace (size-capped).", "payload": "relative file path"},
+    {
+        "name": "write_file",
+        "description": "Write a workspace file ONLY when the harness marks write as Approve-gated.",
+        "payload": "path<newline>content",
+    },
+    {
+        "name": "run_unittest",
+        "description": "Run hermetic unit tests (hardcoded allowlist; no arbitrary shell).",
+        "payload": "ignored",
+    },
 ]
 
 LOOP_TOOL_NAMES = {t["name"] for t in TOOL_CATALOG}
@@ -78,6 +95,7 @@ def compact_workspace_state(
     window_titles: Optional[List[str]] = None,
     playlist_items: Optional[List[Dict[str, Any]]] = None,
     last_error: str = "",
+    reflex_block: str = "",
 ) -> str:
     titles = [t for t in (window_titles or []) if t][:8]
     due = []
@@ -89,6 +107,8 @@ def compact_workspace_state(
         f"Due playlist duties: {', '.join(due) if due else '(none due)'}",
         f"Last error: {last_error or '(none)'}",
     ]
+    if reflex_block:
+        lines.append(reflex_block)
     return "\n".join(lines)
 
 
@@ -147,6 +167,12 @@ def search_memory(
         except Exception as exc:
             hits.append(f"ledger search error: {exc}")
 
+    # Fold Element X reflexes into memory search
+    for r in find_reflexes(query, limit=3):
+        hits.append(
+            f"reflex: duty={r.get('duty_id')} titles={r.get('window_titles')} landmarks={r.get('landmarks')}"
+        )
+
     if not hits:
         return f"search_memory: no matches for '{query}'."
     return "search_memory hits:\n- " + "\n- ".join(hits[:limit])
@@ -166,6 +192,7 @@ def execute_loop_tool(
     focus_window: Optional[Callable[[str], Dict[str, Any]]] = None,
     ledger=None,
     agent_md_path: str = os.path.join("storage", "agent.md"),
+    write_approved: bool = False,
 ) -> Dict[str, Any]:
     """Run one allowlisted loop tool. Returns {ok, observation}."""
     tool = (name or "").strip()
@@ -191,13 +218,34 @@ def execute_loop_tool(
         if tool == "focus_window":
             if focus_window is None:
                 return {"ok": False, "observation": "focus_window helper unavailable."}
+            # Sugar: auto-retry before HITL stuck
             result = focus_window(str(arg))
+            if not result.get("ok"):
+                time.sleep(0.4)
+                result = focus_window(str(arg))
             if result.get("ok"):
-                return {"ok": True, "observation": f"Focused window matching '{arg}'."}
+                active = ""
+                try:
+                    from src.execution.landmark_target import active_window_title
+                    active = active_window_title()
+                except Exception:
+                    pass
+                return {
+                    "ok": True,
+                    "observation": (
+                        f"Focused window matching '{arg}'. "
+                        f"Active window: {active or '(unknown)'}. "
+                        f"attempts={result.get('attempts', '?')}"
+                    ),
+                }
             if run_controller is not None:
+                avail = result.get("available") or []
+                hint = "Open the window, then Continue in VassalOps."
+                if avail:
+                    hint += " Seen: " + ", ".join(str(a) for a in avail[:6])
                 run_controller.enter_stuck(
                     result.get("error") or f"Window “{arg}” not found.",
-                    "Open the window, then Continue in VassalOps.",
+                    hint,
                 )
                 decision = run_controller.wait_while_paused()
                 if decision == "stop":
@@ -207,7 +255,11 @@ def execute_loop_tool(
                 retry = focus_window(str(arg))
                 if retry.get("ok"):
                     return {"ok": True, "observation": f"Focused window matching '{arg}' after Continue."}
-            return {"ok": False, "observation": result.get("error") or f"Window '{arg}' not found."}
+            err = result.get("error") or f"Window '{arg}' not found."
+            return {
+                "ok": False,
+                "observation": f"{err} available={result.get('available') or []}",
+            }
 
         if tool == "type_text":
             if type_text is None:
@@ -238,6 +290,56 @@ def execute_loop_tool(
                 agent_md_path=agent_md_path,
             )
             return {"ok": True, "observation": text}
+
+        if tool == "search_reflex":
+            block = format_reflex_context(goal=str(arg), duty_id=str(arg))
+            if not block:
+                hits = find_reflexes(str(arg), limit=5)
+                if not hits:
+                    return {"ok": True, "observation": f"search_reflex: no reflexes for '{arg}'."}
+                lines = [
+                    f"duty={h.get('duty_id')} titles={h.get('window_titles')} landmarks={h.get('landmarks')}"
+                    for h in hits
+                ]
+                return {"ok": True, "observation": "search_reflex hits:\n- " + "\n- ".join(lines)}
+            return {"ok": True, "observation": block}
+
+        if tool == "list_dir":
+            return {"ok": True, "observation": list_workspace_dir(str(arg or "."))}
+
+        if tool == "read_file":
+            return {"ok": True, "observation": read_workspace_file(str(arg))}
+
+        if tool == "write_file":
+            raw = str(arg)
+            if "\n" in raw:
+                path, _, body = raw.partition("\n")
+            else:
+                path, body = raw, ""
+            msg = write_workspace_file(path.strip(), body, approved=bool(write_approved))
+            ok = msg.startswith("write_file ok")
+            return {"ok": ok, "observation": msg}
+
+        if tool == "run_unittest":
+            import subprocess
+            import sys
+            from src.execution.workspace_files import workspace_root
+
+            cmd = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"]
+            proc = subprocess.run(
+                cmd,
+                cwd=workspace_root(),
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env={**os.environ, "PYTHONPATH": workspace_root()},
+            )
+            out = (proc.stdout or "") + (proc.stderr or "")
+            out = out[-4000:] if len(out) > 4000 else out
+            return {
+                "ok": proc.returncode == 0,
+                "observation": f"run_unittest exit={proc.returncode}\n{out}",
+            }
     except Exception as exc:
         return {"ok": False, "observation": f"Tool '{tool}' failed: {exc}"}
 

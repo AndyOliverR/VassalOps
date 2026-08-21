@@ -182,11 +182,21 @@ def resolve_click_point(step: Dict[str, Any]) -> Dict[str, Any]:
     if landmark:
         pt = find_text_on_screen(landmark)
         if pt:
-            return {"ok": True, "x": pt[0], "y": pt[1], "method": "ocr_landmark"}
+            return {
+                "ok": True,
+                "x": pt[0],
+                "y": pt[1],
+                "method": "ocr_landmark",
+                "landmark": landmark,
+                "active_window": active_window_title(),
+            }
         return {
             "ok": False,
             "error": f"Could not find on-screen text “{landmark}”.",
             "method": "ocr_landmark",
+            "landmark": landmark,
+            "active_window": active_window_title(),
+            "available_titles": list_window_titles()[:12],
         }
 
     title = (step.get("window_title") or "").strip()
@@ -197,7 +207,10 @@ def resolve_click_point(step: Dict[str, Any]) -> Dict[str, Any]:
                 "ok": False,
                 "error": focused.get("error") or "Window focus failed.",
                 "method": "window_title",
+                "window_title": title,
+                "active_window": active_window_title(),
                 "available": focused.get("available") or [],
+                "score_hint": _best_title_score(title),
             }
 
     try:
@@ -205,4 +218,61 @@ def resolve_click_point(step: Dict[str, Any]) -> Dict[str, Any]:
         y = int(step["y"])
     except Exception:
         return {"ok": False, "error": "Click step missing numeric x/y.", "method": "coords"}
-    return {"ok": True, "x": x, "y": y, "method": "coords_after_focus" if title else "coords"}
+    return {
+        "ok": True,
+        "x": x,
+        "y": y,
+        "method": "coords_after_focus" if title else "coords",
+        "window_title": title or None,
+        "active_window": active_window_title(),
+    }
+
+
+def _best_title_score(needle: str) -> Dict[str, Any]:
+    best_title = ""
+    best_score = 0
+    for title in list_window_titles():
+        score = score_title_match(needle, title)
+        if score > best_score:
+            best_score = score
+            best_title = title
+    return {"best_title": best_title, "best_score": best_score}
+
+
+def resolve_click_point_with_retries(
+    step: Dict[str, Any],
+    *,
+    max_auto_retries: int = 2,
+    delay: float = 0.45,
+) -> Dict[str, Any]:
+    """
+    Sugar retry ladder before HITL stuck:
+    1) resolve once
+    2) refocus window_title (if any) and retry
+    3) re-OCR landmark (if any) and retry
+    Then return last failure for Continue/Skip pause.
+    """
+    last: Dict[str, Any] = {"ok": False, "error": "No attempt made."}
+    title = (step.get("window_title") or "").strip()
+    landmark = (step.get("landmark_text") or "").strip()
+
+    for attempt in range(max_auto_retries + 1):
+        if attempt > 0:
+            if title:
+                focus_window_by_title(title, retries=2, delay=delay)
+            time.sleep(delay)
+            # Landmark path re-runs OCR inside resolve_click_point
+        result = resolve_click_point(step)
+        result["auto_attempt"] = attempt + 1
+        result["auto_retries_max"] = max_auto_retries
+        if result.get("ok"):
+            return result
+        last = result
+
+    last["auto_exhausted"] = True
+    last["tried"] = (
+        f"Tried resolve + up to {max_auto_retries} auto-retries "
+        f"(refocus{' + re-OCR' if landmark else ''}). "
+        f"Active window: {last.get('active_window') or '(unknown)'}."
+    )
+    return last

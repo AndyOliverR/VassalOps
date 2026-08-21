@@ -67,6 +67,14 @@ body { background: #1A202C; background-size: cover; background-position: center;
 .stuck-reason-row { display: flex; align-items: flex-start; gap: 8px; color: #FEB2B2; }
 .stuck-reason-row .ui-icon { margin-top: 2px; }
 .run-progress-label { font-size: 13px; color: #E2E8F0; margin-bottom: 8px; min-height: 1.2em; }
+.run-progress-summary { font-size: 12px; color: #A0AEC0; margin-bottom: 8px; line-height: 1.4; white-space: pre-wrap; }
+.run-checklist { margin: 0 0 10px 18px; padding: 0; max-height: 140px; overflow-y: auto; font-size: 12px; color: #CBD5E0; }
+.run-checklist li { margin: 2px 0; }
+.run-checklist li.running { color: #81E6D9; }
+.run-checklist li.done { color: #68D391; }
+.run-checklist li.failed { color: #FEB2B2; }
+.run-checklist li.skipped { color: #A0AEC0; text-decoration: line-through; }
+.hidden { display: none !important; }
 .run-progress-bar { height: 8px; background: #1A202C; border-radius: 999px; overflow: hidden; }
 .run-progress-fill { height: 100%; width: 0%; background: #319795; transition: width 0.2s ease; }
 .stop-btn { background: #C53030; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; }

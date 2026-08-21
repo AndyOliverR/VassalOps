@@ -85,7 +85,7 @@ Optional weekday briefing only (never silent run): `register_morning_briefing.ba
 
 ## How it fits together
 
-An AI agent is an LLM that can use tools, running in a loop until the job is done. A chatbot only generates words. VassalOps is the latter plus **allowlisted desktop tools**, a **bounded think → tool → observe loop** (max 8 turns), and a human **Approve** gate.
+An AI agent is an LLM that can use tools, running in a loop until the job is done. A chatbot only generates words. VassalOps is the latter plus **allowlisted desktop tools**, a **bounded think → tool → observe loop** (max 14 turns), and a human **Approve** gate.
 
 ```text
 capture_context -> parse_intent -> [human Approve] -> agent loop (think/act/observe) -> audit ledger
@@ -93,12 +93,14 @@ capture_context -> parse_intent -> [human Approve] -> agent loop (think/act/obse
 
 - **Control UI** — pywebview loads `storage/dashboard/`; chat + Daily Duties + live progress / Stop / stuck Continue
 - **Planner / loop** — LangGraph in `app.py` + local Ollama. Planner and agent-loop JSON is schema-validated locally (Instructor-style retry, not an Instructor cloud/SDK dependency). Free-form goals Approve once, then the harness runs tools and feeds results back into context
-- **Loop engineering (safe subset)** — Inner loop = bounded `agent_loop` (max 8 turns) **after Approve**. Outer loop = Daily Duties / morning briefing, still **Approve before run**. Unsupervised Claude-style desktop loops (interval jobs that skip Approve) are out of scope.
+- **Loop engineering (safe subset)** — Inner loop = bounded `agent_loop` (max 14 turns) **after Approve**, with landmark auto-retry before stuck. Outer loop = Daily Duties / morning briefing, still **Approve before run**. Unsupervised Claude-style desktop loops (interval jobs that skip Approve) are out of scope.
 - **Neuro-symbolic lite** — Pydantic schemas at the door, thin workday domain rules (Duty / Playlist / Window / Risk) after each tool, human Approve as the gate — **not** OWL/Neo4j
 - **Autoresearch pattern (safe subset)** — Karpathy-style program / asset / score maps to human prefs + teach brief (`storage/agent.md`), duty JSON under `storage/duties/`, and locked scoring via `storage/runs/` evidence. Improve a duty only after Approve or re-teach — **not** unsupervised overnight desktop mutation (and not a vendored [autoresearch](https://github.com/karpathy/autoResearch) dependency)
 - **Workflow redesign (safe subset)** — Productivity comes from redesigning the PC workday (teach duties, Approve, replay), not sprinkling an LLM on the old click-path. Steering context lives in `storage/agent.md` and duty JSON; the duty is the workday spec, checked via Approve and `storage/runs/` evidence. This is the same “redesign the workflow, don’t add a copilot” idea as [AWS/Kiro productivity talks](https://www.youtube.com/watch?v=zy4nmItGsxY) — **not** Amazon Q, Kiro, or unattended cloud agent fleets
 - **Harness engineering (safe subset)** — VassalOps is the harness around local Ollama (allowlisted tools, `storage/agent.md` memory, bounded loops, firewall guardrails), but desktop actions still require **Approve**. Not unsupervised “run for months with no human” harnesses, and not Harness Claw–class personal assistants
-- **Tools (hands)** — allowlisted catalog: duties, focus_window, type_text, press_hotkey, backup, search_memory — last gate is the action firewall
+- **Tools (hands)** — allowlisted catalog: duties, focus_window, type_text, press_hotkey, backup, search_memory, Duty Reflex search, workspace `list_dir`/`read_file`/`write_file` (write Approve-gated), hermetic `run_unittest` — last gate is the action firewall
+- **Element X — Duty Reflex** — successful Approve runs store window/landmark patterns under `storage/reflexes/`; later goals get that procedural memory injected (never skips Approve)
+- **Spice UI** — live run checklist, summary, stuck Continue/Skip, and second Approve for suggested replans
 - **Working memory** — system/user/observation trail, capped OCR, compact window + playlist state each turn
 - **Procedural memory** — taught duties under `storage/duties/` (the workday moat). `search_memory` keyword-searches duties, `storage/agent.md`, and recent audit rows (no vector DB yet)
 - **Skills** — taught duties and imported packs under `storage/duties/` (including `packs/`). Skills = workday routines, not pentest modules. Chat `import demo pack` then `run duty demo notepad hello`

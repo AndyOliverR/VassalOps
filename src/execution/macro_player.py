@@ -11,7 +11,7 @@ try:
 except ImportError:
     raise ImportError("Dependency missing. Please run: pip install pyautogui")
 
-from src.execution.landmark_target import resolve_click_point, focus_window_by_title
+from src.execution.landmark_target import resolve_click_point_with_retries, focus_window_by_title
 from src.execution.plan_narrator import narrate_macro_steps
 from src.execution.run_controller import run_controller
 
@@ -132,12 +132,19 @@ class VassalOpsMacroPlayer:
 
         if action_type == "focus_window":
             title = str(step.get("title") or step.get("payload") or "")
-            result = focus_window_by_title(title)
+            result = focus_window_by_title(title, retries=3)
+            if not result.get("ok"):
+                time.sleep(0.5)
+                result = focus_window_by_title(title, retries=2)
             if result.get("ok"):
                 return True
+            avail = result.get("available") or []
+            hint = "Open or focus the window, then Continue."
+            if avail:
+                hint += " Open titles: " + ", ".join(str(a) for a in avail[:6])
             return self._pause_for_stuck(
                 result.get("error") or f"Window “{title}” not found.",
-                "Open or focus the window, then Continue.",
+                hint,
             )
 
         if action_type == "wait":
@@ -152,7 +159,7 @@ class VassalOpsMacroPlayer:
             if self.controller and self.controller.stop_requested():
                 return "stop"
 
-            resolved = resolve_click_point(step)
+            resolved = resolve_click_point_with_retries(step, max_auto_retries=2)
             if resolved.get("ok"):
                 x, y = int(resolved["x"]), int(resolved["y"])
                 button_str = str(step.get("button", "left")).lower()
@@ -168,17 +175,21 @@ class VassalOpsMacroPlayer:
                 return True
 
             reason = resolved.get("error") or "Could not resolve click target."
+            tried = resolved.get("tried") or ""
             print(f"  [!] Stuck on click step {idx}: {reason}")
             decision = self._pause_for_stuck(
                 reason,
-                "Open the expected app/window (or finish MFA), then Continue to retry this click. Skip to ignore it.",
+                (tried + " " if tried else "")
+                + "Open the expected app/window (or finish MFA), then Continue to retry this click. Skip to ignore it.",
             )
             if decision == "stop":
                 return "stop"
             if decision == "skip":
                 print(f"  [!] Skipping click step {idx}")
+                if self.controller:
+                    self.controller.mark_checklist_status(idx - 1, "skipped")
                 return True
-            # continue -> retry loop
+            # continue -> retry loop (fresh auto-retry ladder)
 
     def _pause_for_stuck(self, reason: str, hint: str):
         if not self.controller:

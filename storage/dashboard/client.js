@@ -359,15 +359,30 @@ const runProgressPanel = document.getElementById('runProgressPanel');
 const runProgressIcon = document.getElementById('runProgressIcon');
 const runProgressLabel = document.getElementById('runProgressLabel');
 const runProgressFill = document.getElementById('runProgressFill');
+const runProgressSummary = document.getElementById('runProgressSummary');
+const runChecklist = document.getElementById('runChecklist');
 const stuckBox = document.getElementById('stuckBox');
 const stuckReason = document.getElementById('stuckReason');
 const stuckHint = document.getElementById('stuckHint');
 const stopRunBtn = document.getElementById('stopRunBtn');
 const continueRunBtn = document.getElementById('continueRunBtn');
+const confirmReplanBtn = document.getElementById('confirmReplanBtn');
 const skipStuckBtn = document.getElementById('skipStuckBtn');
 let progressTimer = null;
 let lastProgressStatus = 'idle';
 let reportedRunEnd = false;
+
+function renderChecklist(items) {
+    if (!runChecklist) return;
+    runChecklist.innerHTML = '';
+    (items || []).slice(0, 24).forEach((item) => {
+        const li = document.createElement('li');
+        const st = item.status || 'pending';
+        li.className = st;
+        li.textContent = (st === 'running' ? '→ ' : st === 'done' ? '✓ ' : st === 'failed' ? '✗ ' : '• ') + (item.label || '');
+        runChecklist.appendChild(li);
+    });
+}
 
 function startProgressPolling() {
     if (progressTimer) clearInterval(progressTimer);
@@ -395,13 +410,26 @@ async function refreshRunProgress() {
         const total = p.total || 0;
         const pct = total > 0 ? Math.min(100, Math.round((cur / total) * 100)) : (status === 'done' ? 100 : 8);
         runProgressFill.style.width = pct + '%';
-        runProgressLabel.textContent = p.label || '';
+        runProgressLabel.textContent = p.label || p.current_tool || '';
+        if (runProgressSummary) {
+            runProgressSummary.textContent = p.summary || '';
+        }
+        renderChecklist(p.checklist || []);
+        const hasReplan = !!(p.pending_replan && p.pending_replan.message);
+        if (confirmReplanBtn) {
+            if (hasReplan) confirmReplanBtn.classList.remove('hidden');
+            else confirmReplanBtn.classList.add('hidden');
+        }
         if (status === 'paused') {
             runProgressIcon.className = 'ui-icon ui-icon-alert';
-            runProgressTitle.textContent = 'Paused — need you';
+            runProgressTitle.textContent = hasReplan ? 'Replan — Approve to continue' : 'Paused — need you';
             stuckBox.classList.remove('hidden');
             stuckReason.textContent = p.stuck_reason || 'Automation is stuck.';
-            stuckHint.textContent = p.stuck_hint || '';
+            let hint = p.stuck_hint || '';
+            if (hasReplan && p.pending_replan.steps && p.pending_replan.steps.length) {
+                hint += '\nSuggested: ' + p.pending_replan.steps.join('; ');
+            }
+            stuckHint.textContent = hint;
         } else {
             stuckBox.classList.add('hidden');
             if (status === 'running') {
@@ -419,6 +447,9 @@ async function refreshRunProgress() {
                 }
                 if (!reportedRunEnd) {
                     reportedRunEnd = true;
+                    if (p.summary) {
+                        appendMessage('VassalOps', p.summary, false);
+                    }
                     if (status === 'done' && p.last_error && !p.ok) {
                         appendMessage('VassalOps', 'Run failed: ' + p.last_error, false);
                     }
@@ -448,6 +479,14 @@ continueRunBtn.addEventListener('click', async () => {
         await window.pywebview.api.continue_run();
     }
 });
+if (confirmReplanBtn) {
+    confirmReplanBtn.addEventListener('click', async () => {
+        if (window.pywebview && window.pywebview.api && window.pywebview.api.confirm_replan) {
+            const msg = await window.pywebview.api.confirm_replan();
+            appendMessage('VassalOps', msg, false);
+        }
+    });
+}
 skipStuckBtn.addEventListener('click', async () => {
     if (window.pywebview && window.pywebview.api) {
         await window.pywebview.api.skip_stuck_step();
