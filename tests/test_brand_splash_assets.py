@@ -1,19 +1,21 @@
-"""Hermetic checks for original brand mark + splash assets."""
+"""Hermetic checks for kneeling-knight brand mark + splash assets."""
 from __future__ import annotations
 
 import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
+
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class TestBrandAndSplashAssets(unittest.TestCase):
-    def test_original_mark_files_exist(self):
+    def test_knight_brand_files_exist(self):
         required = [
-            ROOT / "storage" / "dashboard" / "assets" / "vassal_mark.svg",
+            ROOT / "storage" / "dashboard" / "assets" / "vassal_knight_source.png",
+            ROOT / "storage" / "dashboard" / "assets" / "vassal_knight.png",
             ROOT / "storage" / "dashboard" / "assets" / "BRANDING.txt",
             ROOT / "storage" / "dashboard" / "vassal_icon.png",
             ROOT / "storage" / "dashboard" / "vassal_icon.ico",
@@ -25,24 +27,27 @@ class TestBrandAndSplashAssets(unittest.TestCase):
         for path in required:
             self.assertTrue(path.is_file(), f"missing {path}")
 
-    def test_svg_has_mark_groups(self):
-        svg = (ROOT / "storage" / "dashboard" / "assets" / "vassal_mark.svg").read_text(encoding="utf-8")
-        for name in ("figure", "legL", "legR", "armL", "armR", "torso", "badge"):
-            self.assertIn(f'id="{name}"', svg)
-        self.assertIn('viewBox="0 0 256 256"', svg)
+    def test_icon_png_is_transparent_rgba(self):
+        img = Image.open(ROOT / "storage" / "dashboard" / "vassal_icon.png")
+        self.assertEqual(img.mode, "RGBA")
+        corner = img.getpixel((0, 0))
+        self.assertEqual(corner[3], 0, "corner should be transparent (no black plate)")
 
-    def test_branding_claims_original(self):
+    def test_splash_uses_knight_png(self):
+        html = (ROOT / "storage" / "dashboard" / "splash.html").read_text(encoding="utf-8")
+        self.assertIn("vassal_knight.png", html)
+        self.assertNotIn("vassal_mark.svg", html)
+
+    def test_branding_describes_knight(self):
         text = (ROOT / "storage" / "dashboard" / "assets" / "BRANDING.txt").read_text(encoding="utf-8").lower()
-        self.assertIn("original", text)
-        self.assertIn("not stock", text)
+        self.assertIn("knight", text)
+        self.assertIn("transparent", text)
+        self.assertIn("silver", text)
 
     def test_splash_flag_roundtrip(self):
-        # Mirror VassalOpsAPI flag path without loading full app (Ollama side effects).
         with tempfile.TemporaryDirectory() as tmp:
             flag = Path(tmp) / "splash_seen.json"
-            self.assertFalse(flag.is_file())
-            payload = {"seen": True, "at": "test"}
-            flag.write_text(json.dumps(payload), encoding="utf-8")
+            flag.write_text(json.dumps({"seen": True}), encoding="utf-8")
             data = json.loads(flag.read_text(encoding="utf-8"))
             self.assertTrue(data["seen"])
 

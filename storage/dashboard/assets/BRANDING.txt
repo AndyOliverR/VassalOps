@@ -1,9 +1,9 @@
-Original VassalOps brand mark
-=============================
+VassalOps brand mark
+====================
 
-storage/dashboard/assets/vassal_mark.svg — original vector character and badge
-storage/dashboard/vassal_icon.png / vassal_icon.ico — raster exports of that mark
+Canonical figure: kneeling knight (silver/steel armor, red accents).
+Source: storage/dashboard/assets/vassal_knight_source.png
+Exports: vassal_knight.png (transparent master), vassal_icon.png, vassal_icon.ico
 
-These assets are project-owned original artwork created for VassalOps
-(not stock photography or Shutterstock derivatives). Licensed under the
-same MIT license as the repository.
+Background is removed (transparent alpha) — splash shows the icon only,
+not a black plate. Palette follows the knight art (not dashboard teal).

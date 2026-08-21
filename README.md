@@ -11,7 +11,7 @@
 
 Local-first **Windows** desktop agent: a pywebview control panel, LangGraph planning, local Ollama, and pyautogui automation — with a human **bot-sitter Approve gate** before mouse/keyboard actions run.
 
-Brand mark and splash use an **original** VassalOps SVG (see `storage/dashboard/assets/BRANDING.txt`) — not stock art. Splash shows a large crisp copy of the mark (no walk animation).
+Brand mark and splash use the VassalOps **kneeling knight** (silver/steel + red, transparent background — see `storage/dashboard/assets/BRANDING.txt`). Splash shows that icon large; no teal geometric mascot.
 
 Data stays on your machine by default. Optional network features bind to **localhost** and require a shared token.
 
