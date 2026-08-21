@@ -13,6 +13,8 @@ Local-first **Windows** desktop agent: a pywebview control panel, LangGraph plan
 
 Brand mark and splash use the VassalOps **kneeling knight** (silver/steel + red, transparent background — see `storage/dashboard/assets/BRANDING.txt`). Splash shows that icon large; no teal geometric mascot.
 
+**Acceptable use:** illegal / terror / CSAM / exploitation / critical sabotage uses are refused — warn, log, and shut down. See [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md).
+
 Data stays on your machine by default. Optional network features bind to **localhost** and require a shared token.
 
 ---
@@ -146,6 +148,8 @@ Security practices for local agents are inspired by community guidance (includin
 | Train Daily Duties | [Quick start](#quick-start) → train section |
 | Antivirus false positives | [below](#antivirus-false-positives-k7-windows-defender-etc) |
 | Threat model & vulnerability reports | [SECURITY.md](SECURITY.md) |
+| Acceptable use (refuse + shutdown) | [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md) |
+| Safe public contributions | [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md) |
 | Contribute / good first issues | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Architecture honesty | [How it fits together](#how-it-fits-together) |
 

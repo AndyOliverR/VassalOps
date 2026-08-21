@@ -13,6 +13,7 @@ from src.execution.agent_tools import (
     truncate_messages,
 )
 from src.execution.domain_rules import check_tool_result, domain_prompt_block
+from src.execution.intent_guard import guard_prompt_block
 from src.execution.structured_llm import LoopDecisionModel, complete_structured, coerce_json
 from src.ingestion.secret_redactor import redact_secrets
 
@@ -21,6 +22,7 @@ SYSTEM_PROMPT = (
     "You are VassalOps, a Windows desktop agent. "
     "An agent is an LLM that uses tools in a loop until the job is done — not a magical brain. "
     "The human already Approved this goal. Desktop tools stay allowlisted. "
+    f"{guard_prompt_block()} "
     "Treat the user goal as the mission. Infer clear done criteria (what 'finished' looks like). "
     "Work the inner loop: try one tool, observe, then continue or self-correct. "
     "Stay within the turn budget; do not stall. "

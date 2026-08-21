@@ -6,6 +6,8 @@ Scope stays **desktop Approve + duties**. Do not PR Buzz, ACP, or a Nostr relay 
 
 AI-assisted PRs are welcome when hermetic tests pass and README / SECURITY claims stay accurate. Maintainer judgement still decides merge — Copilot or other assistants do not.
 
+**Supply chain:** All PRs are untrusted until reviewed. Maintainers protect `main` with Code Owners and branch protection — see [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md). Do not PR obfuscated code, hidden downloaders, Approve/intent-guard bypasses, or secrets.
+
 ---
 
 ## Setup
@@ -126,6 +128,7 @@ Do not claim CodeQL, GitHub Advanced Security, or Secure Fund participation unle
 ### PR expectations
 
 - No auto-Approve of desktop macros
+- Do not remove or weaken `intent_guard` / ACCEPTABLE_USE high-severity refusals (CSAM, terrorism, fraud, etc.)
 - No unsupervised scheduled desktop macros or infinite outer loops that bypass Approve
 - No overnight unsupervised duty-mutation / auto-research loops that bypass Approve or rewrite success metrics
 - Broker remains localhost + token when touched

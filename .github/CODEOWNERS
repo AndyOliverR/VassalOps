@@ -1,0 +1,14 @@
+# These owners must review PRs that touch critical paths (requires branch protection + "Require review from Code Owners").
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+*       @AndyOliverR
+
+/.github/workflows/          @AndyOliverR
+/app.py                      @AndyOliverR
+/INSTALL.bat                 @AndyOliverR
+/install_vassalops.ps1       @AndyOliverR
+/bootstrap_and_run.ps1       @AndyOliverR
+/update_vassalops.ps1        @AndyOliverR
+/src/execution/              @AndyOliverR
+/ACCEPTABLE_USE.md           @AndyOliverR
+/SECURITY.md                 @AndyOliverR

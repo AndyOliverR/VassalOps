@@ -32,6 +32,8 @@ We will acknowledge reports as soon as practical and coordinate disclosure.
 - **Network:** Optional WebSocket broker defaults to **off**. When used, it must bind to `127.0.0.1` and require `broker_auth_token` from `config.json`. Do not expose it to LAN/WAN without additional hardening you own.
 - **Teach mode:** `pynput` records keystrokes and clicks. Passwords typed during teach can be stored in duty/macro JSON under `storage/`. Prefer click-only flows for logins; delete sensitive duty files if recorded by mistake.
 - **Replay:** Coordinate clicks are fragile; window-title / OCR landmarks help but can fail. Stuck detection pauses and asks the human to Continue — do not treat Continue as a security boundary for malicious plans you already Approved.
+- **Public contributions:** Treat every PR as untrusted until reviewed. See [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md). Protect `main` with required reviews / Code Owners. Do not run unreviewed contributor code on a machine with secrets.
+- **Acceptable use:** High-severity harmful goals are refused at runtime — see [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md).
 
 ## AI-era risks
 

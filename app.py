@@ -29,6 +29,7 @@ from src.execution.landmark_target import focus_window_by_title, find_text_on_sc
 from src.execution.agent_loop import run_agent_loop
 from src.execution.agent_tools import execute_loop_tool, cap_ocr
 from src.execution.duty_reflex import format_reflex_context, save_reflex
+from src.execution.intent_guard import enforce_intent_or_shutdown, guard_prompt_block
 from src.execution.structured_llm import PlannerPlan, call_ollama_json, complete_structured
 from src.execution.risk_tiers import annotate_steps, risk_summary
 from src.execution.run_evidence import write_run_report
@@ -474,6 +475,10 @@ class VassalOpsAPI:
 
     def submit_command(self, user_input: str) -> str:
         """Receives text from the HTML chat, routes it, and returns the response."""
+        blocked = enforce_intent_or_shutdown(user_input or "", source="chat")
+        if blocked:
+            return blocked
+
         cleaned = user_input.lower().strip()
 
         # Instant read-only duty helpers (no bot-sitter needed)
@@ -595,6 +600,15 @@ class VassalOpsAPI:
                 print("[VassalOps] Plan rejected by bot-sitter.")
                 return "Plan rejected. No desktop actions were executed."
 
+            # Re-check plan text before desktop execution
+            plan_blob = " ".join(
+                [str(s.get("type") or "") + " " + str(s.get("payload") or "") for s in proposed]
+                + narrate_proposed_actions(proposed)
+            )
+            blocked = enforce_intent_or_shutdown(plan_blob, source="approve")
+            if blocked:
+                return blocked
+
             current_state["approval_status"] = "approved"
             readable = narrate_proposed_actions(proposed)
             if any(str(s.get("type")) == "agent_loop" for s in proposed):
@@ -650,6 +664,14 @@ class VassalOpsAPI:
         if not approved:
             return "Playlist run cancelled. No duties were executed."
         ids = duty_ids if isinstance(duty_ids, list) else None
+        briefing = daily_playlist.get_today_playlist()
+        selected = ids or [i["duty_id"] for i in briefing.get("items", []) if i.get("exists")]
+        blocked = enforce_intent_or_shutdown(
+            "run playlist " + " ".join(str(s) for s in selected),
+            source="playlist",
+        )
+        if blocked:
+            return blocked
 
         def _run():
             try:
@@ -684,8 +706,6 @@ class VassalOpsAPI:
             except Exception as exc:
                 run_controller.finish(False, str(exc))
 
-        briefing = daily_playlist.get_today_playlist()
-        selected = ids or [i["duty_id"] for i in briefing.get("items", []) if i.get("exists")]
         readable = [f"Run duty: {d}" for d in selected]
         run_controller.reset_for_run(readable, phase="playlist")
         threading.Thread(target=_run, daemon=True).start()
