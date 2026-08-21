@@ -2,7 +2,7 @@
 
 **Skills = taught or imported duties** — safe, password-free workday routines. Not pentest / vuln packs. Packs are VassalOps’s “travel together” unit for those routines (same packaging instinct as [Agent Plugins](https://developers.googleblog.com/agent-plugins-package-your-skills-tools-and-more/)), still duty JSON + Approve — not the Agent Plugins `plugin.json` / `mcp.json` directory format.
 
-Import with chat: `import demo pack` then `run duty <id>` after **Approve**.
+Import with chat: `import demo pack` then `run duty <id>` after **Approve**. Full script: [docs/DEMO.md](../../../docs/DEMO.md).
 
 ## Morning Notepad Briefing (demo skill)
 
@@ -13,6 +13,14 @@ Goal: prove “type it / teach it → PC does it” in ~60 seconds without Outlo
 3. Chat: `run duty demo notepad hello` → **Approve**
 4. Watch the progress panel (Stop / Continue if stuck). A redacted report lands in `storage/runs/`.
 5. Or teach your own skill: `teach morning email` → do the real task → Escape → `build my workday`.
+
+## Calculator 1+1 (second demo skill)
+
+Password-free alternate proof: opens Calculator via Win+R and types `1+1=`.
+
+1. Chat: `import demo pack`
+2. Chat: `run duty demo calculator one plus one` → **Approve**
+3. Watch Calculator; Stop / Continue if the window title does not match.
 
 JSON files in this folder are copied into `storage/duties/` on import. The agent loop can `list_duties` / `search_memory` / `run_duty` to discover them.
 

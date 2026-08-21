@@ -493,19 +493,18 @@ class VassalOpsAPI:
             director = VassalOpsMainDirectorAgent()
             return director.run_agent_health_check()
             
-        # Intercept and trigger the automated regression proving bench
+        # Regression chat path: no proving-bench module — point to hermetic tests
         elif "regression" in cleaned or "verify patch" in cleaned or "run test" in cleaned:
-            from src.execution.regression_tester import VassalOpsRegressionTester
-            tester = VassalOpsRegressionTester()
-            report = tester.prove_proposed_fix("Calibrate coordinate clipping boundaries and inject safety latency padding")
-            
-            output = "### VassalOps Proving & Regression Bench Report\n"
-            output += f"- **Verification Result:** {'✅ PASS - Safe to Merge' if report['success'] else '❌ FAIL - Regressions Detected'}\n"
-            output += f"- **Benchmark Accuracy Score:** {report['score']}\n\n"
-            output += "#### Executed Test Cases:\n"
-            for item in report["detailed_run"]:
-                output += f"- `{item['case_id']}`: **{item['status']}**\n"
-            return output
+            return (
+                "### Hermetic tests (not an in-app proving bench)\n"
+                "VassalOps does not ship a chat-driven regression runner. "
+                "From the repo root on Windows PowerShell:\n\n"
+                "```powershell\n"
+                "$env:PYTHONPATH = (Get-Location).Path\n"
+                "python -m unittest discover -s tests -p \"test_*.py\"\n"
+                "```\n\n"
+                "Live Ollama checks: set `VASSALOPS_LIVE=1`. See [CONTRIBUTING.md](CONTRIBUTING.md)."
+            )
             
         # Intercept and trigger the newly added advanced automated sleep-time memory loop
         elif "sleep" in cleaned or "optimize memory" in cleaned or "update memory" in cleaned:

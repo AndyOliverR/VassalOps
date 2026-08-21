@@ -1,0 +1,18 @@
+{
+  "id": "demo_calculator_one_plus_one",
+  "name": "Demo: Calculator 1+1",
+  "description": "Safe sample duty — opens Calculator via Win+R and types 1+1=. No passwords. Second 60-second demo after Notepad.",
+  "tags": ["demo", "pack", "safe"],
+  "created_at": "2026-08-21T00:00:00",
+  "last_run": null,
+  "success_count": 0,
+  "steps": [
+    {"type": "hotkey", "keys": ["win", "r"], "delay": 0.0},
+    {"type": "wait", "seconds": 0.6, "delay": 0.5},
+    {"type": "type_text", "text": "calc", "delay": 1.0},
+    {"type": "keystroke", "key": "enter", "delay": 1.8},
+    {"type": "wait", "seconds": 1.2, "delay": 2.2},
+    {"type": "focus_window", "title": "Calculator", "delay": 3.2},
+    {"type": "type_text", "text": "1+1=", "delay": 3.8}
+  ]
+}

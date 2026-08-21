@@ -85,7 +85,7 @@ async function refreshDutiesPanel() {
             dutiesHint.textContent = 'No playlist yet. Chat: teach morning email — then build my workday';
             return;
         }
-        dutiesHint.textContent = 'Briefing for ' + briefing.date + ' (' + briefing.time + '). Check items, then Approve today\'s run.';
+        dutiesHint.textContent = 'Your workday for ' + briefing.date + ' (' + briefing.time + '). Check items, then Approve today\'s run — desktop steps wait for Approve.';
         briefing.items.forEach((item) => {
             const row = document.createElement('div');
             row.className = 'duty-row';
@@ -455,5 +455,5 @@ skipStuckBtn.addEventListener('click', async () => {
 });
 
 window.addEventListener('load', () => {
-    appendMessage('VassalOps', 'Hello! Teach a duty with teach morning email, import demo pack for a 60s demo, or open Daily Duties.\nYour PC\'s workday — taught by you, approved by you, run locally.', false);
+    appendMessage('VassalOps', 'Hello! This is your PC workday runner.\n• Demo: import demo pack → run duty demo notepad hello (or demo calculator one plus one) → Approve\n• Real work: teach morning email → build my workday → Daily Duties → Approve today\'s run\nTaught by you, approved by you, run locally.', false);
 });

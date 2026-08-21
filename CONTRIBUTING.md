@@ -2,7 +2,7 @@
 
 Thanks for helping. Keep changes **focused**, **local-first**, and **honest** about what the code actually does. Do not reintroduce LAN-exposed brokers by default or auto-approve desktop macros from chat.
 
-Scope stays **desktop Approve + duties**. Do not PR Buzz, ACP, or a Nostr relay as core product — those belong to complementary agent workspaces, not VassalOps. Do not PR content-farm, LinkedIn-ghostwriting, or AI-avatar features as core product. Do not PR Kiro, Amazon Q, or cloud coding-agent fleets as core product. Do not PR a Flutter/mobile LLM client, on-device image generation, or a LAN-exposed OpenAI-compatible model server as core product. Do not PR Agent Plugins / MCP packaging as core runtime. Do not PR Harness Claw / OpenClaw-clone personal-agent runtimes or unsupervised no-Approve desktop harnesses as core product. Do not PR Cloudflare pay-per-crawl / X402 agent-payment rails, niche web data-refinery products, or agent-readiness SEO SaaS as core product.
+Scope stays **desktop Approve + duties**. Do not PR Buzz, ACP, or a Nostr relay as core product — those belong to complementary agent workspaces, not VassalOps. Do not PR content-farm, LinkedIn-ghostwriting, or AI-avatar features as core product. Do not PR Kiro, Amazon Q, or cloud coding-agent fleets as core product. Do not PR a Flutter/mobile LLM client, on-device image generation, or a LAN-exposed OpenAI-compatible model server as core product. Do not PR Agent Plugins / MCP packaging as core runtime. Do not PR Harness Claw / OpenClaw-clone personal-agent runtimes or unsupervised no-Approve desktop harnesses as core product. Do not PR Cloudflare pay-per-crawl / X402 agent-payment rails, niche web data-refinery products, or agent-readiness SEO SaaS as core product. Do not PR Gemini Spark, Antigravity SDK/CLI, or Gemini Managed Agents as core runtime.
 
 AI-assisted PRs are welcome when hermetic tests pass and README / SECURITY claims stay accurate. Maintainer judgement still decides merge — Copilot or other assistants do not.
 
@@ -55,10 +55,10 @@ Run the UI: `python app.py` or `bootstrap_and_run.bat`.
 
 Browse Issues labeled **`good first issue`** / **`help wanted`**. High-value starter areas:
 
-1. **Second safe demo duty pack** — `storage/duties/packs/` (no passwords; e.g. Calculator or Paint).
-2. **Landmark robustness** — better window-title matching or OCR fallbacks in `landmark_target.py` + tests.
+1. **Second safe demo duty pack** — done: Calculator pack in `storage/duties/packs/` (see [docs/DEMO.md](docs/DEMO.md)). Extra packs (e.g. Paint) still welcome.
+2. **Landmark robustness** — window-title scoring + OCR multi-word join in `landmark_target.py`; extend with more hermetic cases as needed.
 3. **Dashboard copy / a11y** — clearer Approve and stuck-panel wording in `storage/dashboard/`.
-4. **Docs polish** — typos, screenshots, or a short GIF of the Notepad demo linked from README.
+4. **Docs polish** — demo script in [docs/DEMO.md](docs/DEMO.md); commit a short screen GIF there when you record one.
 5. **Theme toggle** — light/dark preference in `localStorage` for the dashboard.
 6. **ToolRouter disk-space tool** — safe free-disk check still behind Approve (`tool_router.py`).
 
@@ -131,6 +131,7 @@ Do not claim CodeQL, GitHub Advanced Security, or Secure Fund participation unle
 - Do not add Agent Plugins / MCP packaging as core runtime
 - Do not add Harness Claw / OpenClaw-clone personal-agent runtimes or unsupervised no-Approve desktop harnesses as core product
 - Do not add Cloudflare pay-per-crawl / X402 agent-payment rails, niche web data-refinery products, or agent-readiness SEO SaaS as core product
+- Do not add Gemini Spark, Antigravity SDK/CLI, or Gemini Managed Agents as core runtime
 - Prefer new tests for duty/playlist/firewall/landmark behavior
 
 ---

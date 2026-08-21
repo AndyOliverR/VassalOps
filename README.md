@@ -56,7 +56,7 @@ Prefer the `.bat` path. Unsigned `VassalOps.exe` builds often trigger antivirus 
 4. Review the **plain-English** plan → **Approve**
 5. Watch the progress panel (use **Stop** or **Continue** if it pauses)
 
-You should see Notepad open and type a short greeting. That is the 60-second demo. Chat `resume` later to continue the last saved goal (Approve still required for desktop tools).
+You should see Notepad open and type a short greeting. That is the 60-second demo. Alternate: `run duty demo calculator one plus one`. Full script and GIF capture notes: [docs/DEMO.md](docs/DEMO.md). Chat `resume` later to continue the last saved goal (Approve still required for desktop tools).
 
 **Train your real workday**
 
@@ -98,7 +98,7 @@ capture_context -> parse_intent -> [human Approve] -> agent loop (think/act/obse
 
 HITL trust patterns (Approve, evidence, local learning, secret redaction) are inspired by analyst-in-the-loop agent tools such as [PentesterFlow](https://cybersecuritynews.com/pentesterflow/) — **adapted for workday desktop automation only**. VassalOps is not a pentest product and has no YOLO auto-approve.
 
-Complementary to chat/gateway harnesses (e.g. OpenClaw) and Buzz-class agent workspaces ([Buzz](https://github.com/block/buzz)): those are team chat plus coding agents. VassalOps is the local Windows workday loop — teach → Approve → run duties. They are not the same product. On-device chat/image apps (phone offline LLMs, LAN model APIs) are complementary too — VassalOps is not a mobile LLM client or LAN model server. [Agent Plugins](https://developers.googleblog.com/agent-plugins-package-your-skills-tools-and-more/) (portable Skills + MCP for coding agents/IDEs) are complementary as well — VassalOps ships workday duty packs under `storage/duties/packs/` with Approve, not an Agent Plugins client or MCP host.
+Complementary to chat/gateway harnesses (e.g. OpenClaw) and Buzz-class agent workspaces ([Buzz](https://github.com/block/buzz)): those are team chat plus coding agents. VassalOps is the local Windows workday loop — teach → Approve → run duties. They are not the same product. On-device chat/image apps (phone offline LLMs, LAN model APIs) are complementary too — VassalOps is not a mobile LLM client or LAN model server. [Agent Plugins](https://developers.googleblog.com/agent-plugins-package-your-skills-tools-and-more/) (portable Skills + MCP for coding agents/IDEs) are complementary as well — VassalOps ships workday duty packs under `storage/duties/packs/` with Approve, not an Agent Plugins client or MCP host. [Gemini Spark](https://gemini.google/overview/agent/spark/)–class Workspace agents (cloud Gmail/Calendar automation) are complementary too — VassalOps is not Spark or Antigravity.
 
 ---
 
