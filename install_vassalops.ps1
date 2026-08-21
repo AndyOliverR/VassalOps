@@ -114,4 +114,5 @@ Write-Host "  Exclude this folder in AV before building, or PyInstaller output m
 
 Write-Host ""
 Write-Host "Install complete. Double-click the Desktop VassalOps shortcut (or bootstrap_and_run.bat)." -ForegroundColor Green
+Write-Host "On later launches, VassalOps may offer an update from GitHub Releases (your duties and config stay)."
 Write-Host "Marketing spine: Your PC's workday — taught by you, approved by you, run locally."

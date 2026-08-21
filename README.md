@@ -44,6 +44,8 @@ That installs packages, checks Ollama, and creates a Desktop shortcut to `bootst
 bootstrap_and_run.bat
 ```
 
+**Updates:** On launch, VassalOps checks [GitHub Releases](https://github.com/AndyOliverR/VassalOps/releases) and asks before applying. Duties, teach memory, and `config.json` are kept; dashboard + demo packs refresh. Set `VASSALOPS_SKIP_UPDATE=1` to disable. Maintainers: bump `VERSION`, commit, tag `vX.Y.Z` matching that file — CI publishes `VassalOps-X.Y.Z.zip`.
+
 Prefer the `.bat` path. Unsigned `VassalOps.exe` builds often trigger antivirus false positives — see [Antivirus false positives](#antivirus-false-positives-k7-windows-defender-etc). Do not use the old stub `VassalOpsLaunch.exe`.
 
 ---

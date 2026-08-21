@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify VERSION matches tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VER="$(tr -d '[:space:]' < VERSION)"
+          echo "tag=$TAG version=$VER"
+          if [ "$TAG" != "$VER" ]; then
+            echo "VERSION file ($VER) must match tag without v prefix ($TAG)"
+            exit 1
+          fi
+
+      - name: Build release zip
+        run: |
+          VER="$(tr -d '[:space:]' < VERSION)"
+          STAGING="dist/staging"
+          mkdir -p "$STAGING"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='.venv' \
+            --exclude='venv' \
+            --exclude='dist' \
+            --exclude='storage/launch.log' \
+            --exclude='storage/app_stdout.log' \
+            --exclude='storage/app_stderr.log' \
+            --exclude='storage/_dep_check.py' \
+            --exclude='storage/runs' \
+            ./ "$STAGING/"
+          (
+            cd "$STAGING"
+            zip -r "../VassalOps-${VER}.zip" .
+          )
+          ls -la dist/VassalOps-${VER}.zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/VassalOps-*.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true

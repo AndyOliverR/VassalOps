@@ -116,6 +116,13 @@ Do not claim CodeQL, GitHub Advanced Security, or Secure Fund participation unle
 4. Open a PR against `main` with **why**, not only what
 5. Link related Issues
 
+### Releases (maintainers)
+
+1. Bump the `VERSION` file (semver, no `v` prefix)
+2. Merge to `main`, then tag matching that version: `git tag v0.1.0 && git push origin v0.1.0`
+3. `.github/workflows/release.yml` publishes `VassalOps-<VERSION>.zip` on the GitHub Release
+4. Launch-time `update_vassalops.ps1` offers that zip to users (never silent; preserves `storage/` + `config.json`)
+
 ### PR expectations
 
 - No auto-Approve of desktop macros

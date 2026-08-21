@@ -26,6 +26,22 @@ function Show-Error([string]$Message) {
 Write-Log "=== VassalOps bootstrap starting ==="
 Write-Log "Root: $Root"
 
+# Optional auto-update from GitHub Releases (prompted; duties + config preserved)
+$updateScript = Join-Path $Root "update_vassalops.ps1"
+if (Test-Path $updateScript) {
+    try {
+        $updateResult = & $updateScript -Root $Root
+        if ($updateResult -and $updateResult.Applied) {
+            Write-Log "Restarting bootstrap after update to $($updateResult.Version)..."
+            $env:VASSALOPS_SKIP_UPDATE = "1"
+            & $PSCommandPath
+            exit $LASTEXITCODE
+        }
+    } catch {
+        Write-Log "Update check error (continuing): $($_.Exception.Message)"
+    }
+}
+
 # Resolve Python
 $python = $null
 $pythonArgsPrefix = @()
