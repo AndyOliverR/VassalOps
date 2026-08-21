@@ -1,44 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="VassalOps">
-  <!-- Original VassalOps mark  project-owned geometry (MIT with repo). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="VassalOps">
+  <!-- Original VassalOps mark — project-owned geometry (MIT with repo). Finer paths for crisp splash scaling. -->
   <defs>
     <clipPath id="badgeClip">
-      <circle cx="64" cy="64" r="58"/>
+      <circle cx="128" cy="128" r="116"/>
     </clipPath>
   </defs>
   <g id="badge">
-    <circle cx="64" cy="64" r="60" fill="#1A202C"/>
-    <circle cx="64" cy="64" r="54" fill="#234E52" stroke="#319795" stroke-width="4"/>
+    <circle cx="128" cy="128" r="124" fill="#1A202C"/>
+    <circle cx="128" cy="128" r="112" fill="#234E52" stroke="#319795" stroke-width="6"/>
+    <circle cx="128" cy="128" r="104" fill="none" stroke="#2C7A7B" stroke-width="1.25" opacity="0.85"/>
   </g>
   <g id="vassal" clip-path="url(#badgeClip)">
-    <!-- Walk/somersault root -->
-    <g id="figure" transform="translate(64 72)">
-      <g id="armL" transform="translate(-18 -8)">
-        <rect x="-4" y="0" width="8" height="22" rx="3" fill="#81E6D9" transform="rotate(25)"/>
+    <g id="figure" transform="translate(128 148)">
+      <g id="armL" transform="translate(-36 -14)">
+        <rect x="-5" y="0" width="10" height="44" rx="4" fill="#81E6D9" transform="rotate(22)"/>
       </g>
-      <g id="armR" transform="translate(18 -8)">
-        <rect x="-4" y="0" width="8" height="22" rx="3" fill="#81E6D9" transform="rotate(-25)"/>
-        <!-- small round shield -->
-        <circle cx="6" cy="14" r="10" fill="#319795" stroke="#E2E8F0" stroke-width="2"/>
-        <path d="M6 6 L6 22 M1 14 L11 14" stroke="#E2E8F0" stroke-width="1.5"/>
+      <g id="armR" transform="translate(36 -14)">
+        <rect x="-5" y="0" width="10" height="40" rx="4" fill="#81E6D9" transform="rotate(-22)"/>
+        <circle cx="12" cy="28" r="18" fill="#319795" stroke="#E2E8F0" stroke-width="2.5"/>
+        <path d="M12 14 L12 42 M4 28 L20 28" stroke="#E2E8F0" stroke-width="2" stroke-linecap="round"/>
       </g>
-      <g id="torso" transform="translate(0 -6)">
-        <!-- tunic -->
-        <path d="M-14 -2 L14 -2 L12 28 L-12 28 Z" fill="#2C7A7B"/>
-        <rect x="-10" y="-6" width="20" height="10" rx="2" fill="#319795"/>
-        <!-- helmet -->
-        <g id="head" transform="translate(0 -18)">
-          <ellipse cx="0" cy="0" rx="12" ry="11" fill="#4A5568"/>
-          <rect x="-12" y="-2" width="24" height="6" rx="1" fill="#1A202C"/>
-          <rect x="-4" y="-14" width="8" height="6" rx="1" fill="#81E6D9"/>
+      <g id="torso" transform="translate(0 -10)">
+        <path d="M-28 -2 L28 -2 L24 58 L-24 58 Z" fill="#2C7A7B"/>
+        <path d="M-28 -2 L28 -2 L26 8 L-26 8 Z" fill="#319795"/>
+        <rect x="-20" y="-14" width="40" height="18" rx="3" fill="#319795" stroke="#81E6D9" stroke-width="1"/>
+        <g id="head" transform="translate(0 -36)">
+          <ellipse cx="0" cy="2" rx="24" ry="22" fill="#4A5568"/>
+          <path d="M-24 -2 H24" stroke="#1A202C" stroke-width="7" stroke-linecap="round"/>
+          <rect x="-22" y="-4" width="44" height="9" rx="1.5" fill="#1A202C"/>
+          <rect x="-7" y="-28" width="14" height="12" rx="2" fill="#81E6D9"/>
+          <rect x="-7" y="-28" width="14" height="3" rx="1" fill="#E2E8F0" opacity="0.55"/>
         </g>
       </g>
-      <g id="legL" transform="translate(-7 26)">
-        <rect x="-4" y="0" width="8" height="20" rx="3" fill="#2D3748"/>
-        <rect x="-5" y="16" width="10" height="5" rx="2" fill="#1A202C"/>
+      <g id="legL" transform="translate(-14 52)">
+        <rect x="-6" y="0" width="12" height="40" rx="4" fill="#2D3748"/>
+        <rect x="-8" y="34" width="16" height="9" rx="2.5" fill="#1A202C"/>
       </g>
-      <g id="legR" transform="translate(7 26)">
-        <rect x="-4" y="0" width="8" height="20" rx="3" fill="#2D3748"/>
-        <rect x="-5" y="16" width="10" height="5" rx="2" fill="#1A202C"/>
+      <g id="legR" transform="translate(14 52)">
+        <rect x="-6" y="0" width="12" height="40" rx="4" fill="#2D3748"/>
+        <rect x="-8" y="34" width="16" height="9" rx="2.5" fill="#1A202C"/>
       </g>
     </g>
   </g>

@@ -25,10 +25,11 @@ class TestBrandAndSplashAssets(unittest.TestCase):
         for path in required:
             self.assertTrue(path.is_file(), f"missing {path}")
 
-    def test_svg_has_animatable_groups(self):
+    def test_svg_has_mark_groups(self):
         svg = (ROOT / "storage" / "dashboard" / "assets" / "vassal_mark.svg").read_text(encoding="utf-8")
-        for name in ("figure", "legL", "legR", "armL", "armR", "torso"):
+        for name in ("figure", "legL", "legR", "armL", "armR", "torso", "badge"):
             self.assertIn(f'id="{name}"', svg)
+        self.assertIn('viewBox="0 0 256 256"', svg)
 
     def test_branding_claims_original(self):
         text = (ROOT / "storage" / "dashboard" / "assets" / "BRANDING.txt").read_text(encoding="utf-8").lower()

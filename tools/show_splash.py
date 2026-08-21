@@ -51,7 +51,7 @@ def main() -> int:
     api._window = window
 
     def safety_close() -> None:
-        time.sleep(5.0)
+        time.sleep(3.0)
         if not api.done:
             try:
                 window.destroy()

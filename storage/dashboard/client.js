@@ -460,7 +460,7 @@ window.addEventListener('load', async () => {
         appendMessage('VassalOps', 'Hello! This is your PC workday runner.\n• Demo: import demo pack → run duty demo notepad hello (or demo calculator one plus one) → Approve\n• Real work: teach morning email → build my workday → Daily Duties → Approve today\'s run\nTaught by you, approved by you, run locally.', false);
     };
 
-    // Brand splash every launch — walk / somersault / settle (fun layer; Desktop .ico stays static)
+    // Brand splash every launch — large sharp mark (Desktop .ico stays static)
     if (!overlay) {
         finishWelcome();
         return;
@@ -469,7 +469,7 @@ window.addEventListener('load', async () => {
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const ms = reduced ? 900 : 3400;
+    const ms = reduced ? 700 : 1800;
     setTimeout(async () => {
         const stage = document.getElementById('splashStage');
         if (stage) stage.classList.add('fade-out');
@@ -482,6 +482,6 @@ window.addEventListener('load', async () => {
                 }
             } catch (e) { /* optional flag */ }
             finishWelcome();
-        }, 450);
+        }, 350);
     }, ms);
 });

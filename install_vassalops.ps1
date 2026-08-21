@@ -203,7 +203,7 @@ if (Test-Path $icon) { $sc.IconLocation = $icon }
 $sc.Save()
 Write-Host "Shortcut: $shortcutPath -> $target"
 
-Write-Step "Brand splash (walk / somersault)"
+Write-Step "Brand splash"
 $splashPy = Join-Path $Root "tools\show_splash.py"
 if (Test-Path $splashPy) {
     try {

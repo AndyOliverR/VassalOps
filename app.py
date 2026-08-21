@@ -672,7 +672,7 @@ class VassalOpsAPI:
         return os.path.join("storage", "splash_seen.json")
 
     def should_show_splash(self) -> bool:
-        """Always show brand splash on UI load (walk / somersault)."""
+        """Always show brand splash on UI load (large sharp mark)."""
         return True
 
     def mark_splash_seen(self) -> dict:

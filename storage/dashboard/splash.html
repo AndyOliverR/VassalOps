@@ -8,47 +8,9 @@
 </head>
 <body>
   <div class="splash-stage" id="splashStage">
-    <div class="mark-wrap" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="VassalOps">
-        <defs>
-          <clipPath id="badgeClip">
-            <circle cx="64" cy="64" r="58"/>
-          </clipPath>
-        </defs>
-        <g id="badge">
-          <circle cx="64" cy="64" r="60" fill="#1A202C"/>
-          <circle cx="64" cy="64" r="54" fill="#234E52" stroke="#319795" stroke-width="4"/>
-        </g>
-        <g id="vassal" clip-path="url(#badgeClip)">
-          <g id="figure" transform="translate(64 72)">
-            <g id="armL" transform="translate(-18 -8)">
-              <rect x="-4" y="0" width="8" height="22" rx="3" fill="#81E6D9" transform="rotate(25)"/>
-            </g>
-            <g id="armR" transform="translate(18 -8)">
-              <rect x="-4" y="0" width="8" height="22" rx="3" fill="#81E6D9" transform="rotate(-25)"/>
-              <circle cx="6" cy="14" r="10" fill="#319795" stroke="#E2E8F0" stroke-width="2"/>
-              <path d="M6 6 L6 22 M1 14 L11 14" stroke="#E2E8F0" stroke-width="1.5"/>
-            </g>
-            <g id="torso" transform="translate(0 -6)">
-              <path d="M-14 -2 L14 -2 L12 28 L-12 28 Z" fill="#2C7A7B"/>
-              <rect x="-10" y="-6" width="20" height="10" rx="2" fill="#319795"/>
-              <g id="head" transform="translate(0 -18)">
-                <ellipse cx="0" cy="0" rx="12" ry="11" fill="#4A5568"/>
-                <rect x="-12" y="-2" width="24" height="6" rx="1" fill="#1A202C"/>
-                <rect x="-4" y="-14" width="8" height="6" rx="1" fill="#81E6D9"/>
-              </g>
-            </g>
-            <g id="legL" transform="translate(-7 26)">
-              <rect x="-4" y="0" width="8" height="20" rx="3" fill="#2D3748"/>
-              <rect x="-5" y="16" width="10" height="5" rx="2" fill="#1A202C"/>
-            </g>
-            <g id="legR" transform="translate(7 26)">
-              <rect x="-4" y="0" width="8" height="20" rx="3" fill="#2D3748"/>
-              <rect x="-5" y="16" width="10" height="5" rx="2" fill="#1A202C"/>
-            </g>
-          </g>
-        </g>
-      </svg>
+    <div class="mark-wrap">
+      <!-- Vector mark = exact brand icon, crisp at any window size -->
+      <img class="splash-icon" src="assets/vassal_mark.svg" width="512" height="512" alt="VassalOps">
     </div>
     <div class="splash-title">VassalOps</div>
     <div class="splash-sub">Your PC's workday — taught by you, approved by you, run locally.</div>
@@ -56,7 +18,7 @@
   <script>
     (function () {
       var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var ms = reduced ? 900 : 3400;
+      var ms = reduced ? 700 : 1800;
       setTimeout(function () {
         var stage = document.getElementById('splashStage');
         if (stage) stage.classList.add('fade-out');
@@ -65,7 +27,7 @@
             window.pywebview.api.splash_finished();
           }
           document.title = 'VassalOps-splash-done';
-        }, 450);
+        }, 350);
       }, ms);
     })();
   </script>
