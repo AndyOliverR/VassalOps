@@ -11,6 +11,7 @@ DASH = ROOT / "storage" / "dashboard"
 SOURCE = DASH / "assets" / "vassal_knight_source.png"
 OUT_PNG = DASH / "vassal_icon.png"
 OUT_ICO = DASH / "vassal_icon.ico"
+OUT_ICO_DESKTOP = DASH / "vassalops_bare.ico"  # Desktop shortcut (transparent knight)
 OUT_MASTER = DASH / "assets" / "vassal_knight.png"
 
 # Splash stage background — used only if a residual fringe remains
@@ -92,15 +93,26 @@ def trim_alpha(img: Image.Image, pad: int = 8) -> Image.Image:
     return img.crop((left, top, right, bottom))
 
 
-def fit_square(img: Image.Image, size: int) -> Image.Image:
-    """Contain knight in a transparent square canvas."""
-    scaled = img.copy()
-    scaled.thumbnail((size, size), Image.Resampling.LANCZOS)
+def fit_square(img: Image.Image, size: int, fill: float = 0.94, *, allow_upscale: bool = True) -> Image.Image:
+    """Place knight in a transparent square. Splash should not upscale (keeps clean edges)."""
+    target = max(1, int(size * fill))
+    w, h = img.size
+    scale = min(target / w, target / h)
+    if not allow_upscale:
+        scale = min(scale, 1.0)
+    nw = max(1, int(round(w * scale)))
+    nh = max(1, int(round(h * scale)))
+    scaled = img.resize((nw, nh), Image.Resampling.LANCZOS) if (nw, nh) != (w, h) else img.copy()
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     ox = (size - scaled.width) // 2
     oy = (size - scaled.height) // 2
     canvas.paste(scaled, (ox, oy), scaled)
     return canvas
+
+
+def fit_square_desktop(img: Image.Image, size: int, fill: float = 0.90) -> Image.Image:
+    """Transparent desktop icon — knight only, no plate and no outline stroke."""
+    return fit_square(img, size, fill=fill, allow_upscale=True)
 
 
 def main() -> None:
@@ -110,19 +122,25 @@ def main() -> None:
     cut = trim_alpha(cut, pad=4)
     DASH.mkdir(parents=True, exist_ok=True)
     (DASH / "assets").mkdir(parents=True, exist_ok=True)
-    ui = fit_square(cut, 512)
-    master = fit_square(cut, 1024)
+    # Splash master = transparent knight (no separate splash duplicate)
+    ui = fit_square(cut, 512, fill=0.88, allow_upscale=False)
+    master = fit_square(cut, 1024, fill=0.70, allow_upscale=False)
     ui.save(OUT_PNG, format="PNG")
     master.save(OUT_MASTER, format="PNG")
-    sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
-    icons = [fit_square(cut, s[0]) for s in sizes]
-    icons[0].save(OUT_ICO, format="ICO", sizes=sizes)
-    # sanity: corners must be transparent
+    # Desktop + title-bar ICOs
+    sizes = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
+    ico_master = fit_square_desktop(cut, 256, fill=0.90)
+    ico_master.save(OUT_ICO, format="ICO", sizes=sizes)
+    ico_master.save(OUT_ICO_DESKTOP, format="ICO", sizes=sizes)
     c0 = master.getpixel((0, 0))
+    ico_c = ico_master.getpixel((2, 2))
     print(f"Wrote {OUT_PNG}")
     print(f"Wrote {OUT_ICO}")
+    print(f"Wrote {OUT_ICO_DESKTOP}")
     print(f"Wrote {OUT_MASTER}")
     print(f"master corner RGBA={c0} (alpha should be 0)")
+    print(f"ico corner RGBA={ico_c} (alpha should be 0)")
+    print(f"ico sizes={sizes}")
 
 
 if __name__ == "__main__":

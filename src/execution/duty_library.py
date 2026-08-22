@@ -167,7 +167,24 @@ class VassalOpsDutyLibrary:
                 imported.append(duty_id)
             except Exception as exc:
                 return {"ok": False, "imported": imported, "error": str(exc)}
-        return {"ok": True, "imported": imported}
+
+        # ICM staged packs (folder + CONTEXT.md + duty.json per stage)
+        from src.execution.staged_pack import import_staged_packs
+
+        staged = import_staged_packs(self)
+        if not staged.get("ok"):
+            return {
+                "ok": False,
+                "imported": imported,
+                "imported_packs": staged.get("imported_packs") or [],
+                "error": staged.get("error") or "Staged pack import failed",
+            }
+        imported.extend(staged.get("imported_duties") or [])
+        return {
+            "ok": True,
+            "imported": imported,
+            "imported_packs": staged.get("imported_packs") or [],
+        }
 
 
 def extract_duty_name_from_command(user_input: str, keyword: str) -> str:

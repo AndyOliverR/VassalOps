@@ -19,6 +19,7 @@ class TestBrandAndSplashAssets(unittest.TestCase):
             ROOT / "storage" / "dashboard" / "assets" / "BRANDING.txt",
             ROOT / "storage" / "dashboard" / "vassal_icon.png",
             ROOT / "storage" / "dashboard" / "vassal_icon.ico",
+            ROOT / "storage" / "dashboard" / "vassalops_bare.ico",
             ROOT / "storage" / "dashboard" / "splash.html",
             ROOT / "storage" / "dashboard" / "splash.css",
             ROOT / "tools" / "show_splash.py",
@@ -37,6 +38,7 @@ class TestBrandAndSplashAssets(unittest.TestCase):
         html = (ROOT / "storage" / "dashboard" / "splash.html").read_text(encoding="utf-8")
         self.assertIn("vassal_knight.png", html)
         self.assertNotIn("vassal_mark.svg", html)
+        self.assertNotIn("vassal_knight_splash.png", html)
 
     def test_branding_describes_knight(self):
         text = (ROOT / "storage" / "dashboard" / "assets" / "BRANDING.txt").read_text(encoding="utf-8").lower()

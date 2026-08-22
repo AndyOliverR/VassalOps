@@ -11,7 +11,7 @@
     <div id="splashOverlay" class="hidden" aria-hidden="true">
       <div class="splash-stage" id="splashStage">
         <div class="mark-wrap">
-          <img class="splash-icon" src="assets/vassal_knight.png" width="512" height="512" alt="VassalOps">
+          <img class="splash-icon" src="assets/vassal_knight.png?v=5" width="512" height="512" alt="VassalOps">
         </div>
         <div class="splash-title">VassalOps</div>
         <div class="splash-sub">Your PC's workday — taught by you, approved by you, run locally.</div>
@@ -64,6 +64,7 @@
         </div>
         <div id="runProgressLabel" class="run-progress-label"></div>
         <div id="runProgressSummary" class="run-progress-summary"></div>
+        <div id="needsYouBrief" class="needs-you-brief hidden" aria-live="polite"></div>
         <ol id="runChecklist" class="run-checklist" aria-label="Run checklist"></ol>
         <div class="run-progress-bar"><div id="runProgressFill" class="run-progress-fill"></div></div>
         <div id="stuckBox" class="stuck-box hidden">
@@ -82,7 +83,6 @@
 
     <div class="controls-capsule">
         <input type="text" id="userInputField" class="text-input" placeholder="Type your command..." autocomplete="off">
-        <button class="action-btn" id="micButton" title="Simulate Voice Input">🎙️</button>
         <button class="run-btn" id="runButton">Run</button>
     </div>
 

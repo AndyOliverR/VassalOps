@@ -15,6 +15,7 @@ ACTION_LABELS = {
     "run_saved_macro": "Replay macro",
     "teach_duty": "Teach duty (record)",
     "run_duty": "Run duty",
+    "run_staged_pack": "Run staged pack (Approve between stages)",
     "run_playlist": "Run today's workday playlist",
     "run_backup": "Run backup tool",
     "sort_intel": "Sort intel folder",

@@ -1,0 +1,27 @@
+{
+  "id": "staged_demo_notepad",
+  "name": "Staged demo: Notepad (ICM gates)",
+  "kind": "staged_pack",
+  "description": "ICM-style two-stage Notepad demo. Stage 1 opens Notepad; human Approve gate; stage 2 types the greeting. Local only \u2014 not a multi-agent swarm.",
+  "tags": [
+    "demo",
+    "pack",
+    "safe",
+    "staged",
+    "icm"
+  ],
+  "stages": [
+    {
+      "folder": "01_open_notepad",
+      "name": "Open Notepad",
+      "duty_id": "staged_demo_notepad_01_open",
+      "approve_after": true
+    },
+    {
+      "folder": "02_type_greeting",
+      "name": "Type greeting",
+      "duty_id": "staged_demo_notepad_02_type",
+      "approve_after": false
+    }
+  ]
+}

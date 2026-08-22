@@ -201,7 +201,26 @@ $stderrLog = Join-Path $StorageDir "app_stderr.log"
 $argList = @()
 $argList += $pythonArgsPrefix
 $argList += $appPath
-$proc = Start-Process -FilePath $python -ArgumentList $argList -WorkingDirectory $Root -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
-Write-Log "app.py started with PID $($proc.Id)"
+
+# Prefer pythonw / pyw: no console window, but do NOT use -WindowStyle Hidden —
+# that would also hide the VassalOps GUI (pywebview) the user needs to chat with.
+$guiPython = $null
+$leaf = [System.IO.Path]::GetFileNameWithoutExtension($python).ToLowerInvariant()
+if ($leaf -eq "python") {
+    $candidate = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($python), "pythonw.exe")
+    if (Test-Path $candidate) { $guiPython = $candidate }
+} elseif ($leaf -eq "py") {
+    $pyw = Get-Command pyw -ErrorAction SilentlyContinue
+    if ($pyw) { $guiPython = $pyw.Source }
+}
+if (-not $guiPython) {
+    $pythonwCmd = Get-Command pythonw -ErrorAction SilentlyContinue
+    if ($pythonwCmd) { $guiPython = $pythonwCmd.Source }
+}
+if (-not $guiPython) { $guiPython = $python }
+
+$proc = Start-Process -FilePath $guiPython -ArgumentList $argList -WorkingDirectory $Root `
+    -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+Write-Log "app.py started with PID $($proc.Id) via $guiPython (GUI visible, no console)"
 Write-Log "=== VassalOps bootstrap finished ==="
 exit 0

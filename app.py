@@ -163,10 +163,60 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
     if user_raw.startswith("run duty") or "run duty " in user_raw:
         duty_name = extract_duty_name_from_command(state["raw_user_input"], "run duty")
         from src.execution.duty_library import _slugify
+        from src.execution.staged_pack import resolve_pack_dir
+
         duty_id = _slugify(duty_name)
+        # Allow "run duty staged demo notepad" to hit the staged pack runner
+        if resolve_pack_dir("storage/duties", duty_id) or resolve_pack_dir(
+            "storage/duties", duty_name.replace(" ", "_")
+        ):
+            pack_key = duty_id if resolve_pack_dir("storage/duties", duty_id) else _slugify(duty_name)
+            steps = [
+                {"type": "run_staged_pack", "payload": pack_key},
+                {
+                    "type": "speak_log",
+                    "payload": (
+                        f"Ready to run staged pack '{pack_key}' after you Approve. "
+                        "Stages pause for a second Approve between gates."
+                    ),
+                },
+            ]
+            return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
         steps = [
             {"type": "run_duty", "payload": duty_id},
             {"type": "speak_log", "payload": f"Ready to run duty '{duty_id}' after you Approve."},
+        ]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    if any(
+        k in user_raw
+        for k in ("run staged pack", "run stage pack", "run icm pack", "staged pack")
+    ):
+        from src.execution.duty_library import _slugify
+
+        pack_name = extract_duty_name_from_command(state["raw_user_input"], "pack")
+        if pack_name in ("unnamed_duty", "") or "staged" in pack_name.lower():
+            # Prefer text after "staged pack" / "run staged pack"
+            raw = state["raw_user_input"]
+            lowered = raw.lower()
+            for key in ("run staged pack", "staged pack", "run icm pack"):
+                if key in lowered:
+                    pack_name = raw[lowered.find(key) + len(key) :].strip(" ,.-") or "staged_demo_notepad"
+                    break
+            else:
+                pack_name = pack_name or "staged_demo_notepad"
+        pack_id = _slugify(pack_name) if pack_name else "staged_demo_notepad"
+        if pack_id in ("staged", "icm", "demo"):
+            pack_id = "staged_demo_notepad"
+        steps = [
+            {"type": "run_staged_pack", "payload": pack_id},
+            {
+                "type": "speak_log",
+                "payload": (
+                    f"Ready to run staged pack '{pack_id}' after you Approve. "
+                    "Human gates between stages — not a multi-agent swarm."
+                ),
+            },
         ]
         return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
 
@@ -406,6 +456,18 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
                     print(f"[DutyReflex] save failed: {exc}")
             if not outcome.get("ok"):
                 print(f" [Duty] FAILED: {outcome.get('error')}")
+        elif action_type == "run_staged_pack":
+            from src.execution.staged_pack import run_staged_pack
+
+            report = run_staged_pack(
+                str(payload),
+                library=duty_library,
+                run_controller=run_controller,
+                ledger=audit_ledger,
+            )
+            print(f" [StagedPack] {report}")
+            if not report.get("ok"):
+                print(f" [StagedPack] FAILED: {report.get('error') or report}")
         elif action_type == "run_playlist":
             report = daily_playlist.run_playlist()
             print(f" [Playlist] {report}")
@@ -502,7 +564,15 @@ class VassalOpsAPI:
             return (
                 "Imported demo duties:\n"
                 + "\n".join(f"- {i}" for i in ids)
+                + (
+                    "\n\nStaged packs: "
+                    + ", ".join(result.get("imported_packs") or [])
+                    if result.get("imported_packs")
+                    else ""
+                )
                 + "\n\nTry: run duty demo notepad hello (then Approve).\n"
+                "Or staged ICM demo: run staged pack staged demo notepad "
+                "(Approve → stage gate → Approve again).\n"
                 "Tagline: Your PC's workday — taught by you, approved by you, run locally."
             )
         if "build my workday" in cleaned or "build workday" in cleaned:
@@ -741,30 +811,43 @@ class VassalOpsAPI:
         return payload
 
 def force_win32_window_icon():
-    """Win32 Kernel Hack: Forces Windows to paint vassal_icon.ico onto the title bar frame directly."""
+    """Win32: title-bar icon + repeatedly force 60% centered placement on the real monitor."""
     import ctypes
     import time
-    
-    # Give pywebview a brief moment to draw the window canvas frame shell
-    time.sleep(1.0)
-    
-    # Define underlying Win32 API user functions and constants
+    from src.window_center import find_vassalops_hwnd, seat_vassalops_loop
+
+    def _place_log(msg: str) -> None:
+        try:
+            with open(os.path.join("storage", "window_place.log"), "a", encoding="utf-8") as f:
+                f.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+        except Exception:
+            pass
+
+    # Re-apply center for ~2.5s — WebView2 often repositions after first show
+    seat_vassalops_loop(
+        max_frac=0.60,
+        preferred_w=960,
+        preferred_h=640,
+        duration_s=2.8,
+        interval_s=0.1,
+        log=_place_log,
+    )
+
     user32 = ctypes.windll.user32
     WM_SETICON = 0x0080
     ICON_SMALL = 0
     ICON_BIG = 1
     LR_LOADFROMFILE = 0x00000010
     IMAGE_ICON = 1
-    
-    # Locate the active system window handle matching our exact canvas title property
-    hwnd = user32.FindWindowW(None, "VassalOps")
+
+    hwnd = find_vassalops_hwnd()
     if hwnd:
-        icon_path = os.path.abspath("storage/dashboard/vassal_icon.ico")
+        icon_path = os.path.abspath("storage/dashboard/vassalops_bare.ico")
+        if not os.path.isfile(icon_path):
+            icon_path = os.path.abspath("storage/dashboard/vassal_icon.ico")
         if os.path.exists(icon_path):
-            # Read and compile the icon file directly into a Windows system graphics handle
             hicon = user32.LoadImageW(0, icon_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE)
             if hicon:
-                # Force-send structural messages to the OS layout to paint the icon on the title bar
                 user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon)
                 user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon)
                 print("[VassalOps Win32] Success: System title bar icon forced via kernel memory handles.")
@@ -772,22 +855,50 @@ def force_win32_window_icon():
 if __name__ == "__main__":
     import webview
     import threading
+    from src.window_center import fitted_window, seat_hwnd_centered, find_vassalops_hwnd
+
     print("======================================================")
     print("VassalOps Core Engine Online -- UI Window Launching")
     print("======================================================")
+
+    # Align DPI before WebView2 creates the HWND (avoids corner drift)
+    try:
+        import ctypes
+
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PER_MONITOR_AWARE
+        except Exception:
+            ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
     
     api_bridge = VassalOpsAPI()
+    x, y, win_w, win_h = fitted_window(960, 640, max_frac=0.60)
     window = webview.create_window(
         title="VassalOps",
         url=os.path.abspath("storage/dashboard/index.html"),
-        width=1200,
-        height=800,
+        width=win_w,
+        height=win_h,
+        x=x,
+        y=y,
         resizable=True,
         text_select=True,
         js_api=api_bridge
     )
-    
-    # Spawn our native Win32 icon injector quietly on a background thread
+
+    def _seat_center() -> None:
+        try:
+            window.resize(win_w, win_h)
+            window.move(x, y)
+        except Exception:
+            pass
+        hwnd = find_vassalops_hwnd()
+        if hwnd:
+            seat_hwnd_centered(hwnd, max_frac=0.60, preferred_w=960, preferred_h=640)
+
+    window.events.shown += _seat_center
+    window.events.loaded += _seat_center
+
     threading.Thread(target=force_win32_window_icon, daemon=True).start()
     
     webview.start()

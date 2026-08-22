@@ -3,7 +3,8 @@ VassalOps brand mark
 
 Canonical figure: kneeling knight (silver/steel armor, red accents).
 Source: storage/dashboard/assets/vassal_knight_source.png
-Exports: vassal_knight.png (transparent master), vassal_icon.png, vassal_icon.ico
+Exports: vassal_knight.png (transparent splash/master),
+vassal_icon.png, vassal_icon.ico, vassalops_bare.ico (desktop).
 
 Background is removed (transparent alpha) — splash shows the icon only,
 not a black plate. Palette follows the knight art (not dashboard teal).

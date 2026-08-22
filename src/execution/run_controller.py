@@ -25,6 +25,7 @@ class VassalOpsRunController:
             "readable_steps": [],
             "checklist": [],
             "summary": "",
+            "needs_you": "",
             "current_tool": "",
             "pending_replan": None,
             "last_error": "",
@@ -87,6 +88,17 @@ class VassalOpsRunController:
     def set_summary(self, text: str) -> None:
         with self._lock:
             self._state["summary"] = (text or "")[:800]
+            # Parse ICM / Spice "Needs you:" line for the progress panel badge
+            needs = ""
+            for line in (text or "").splitlines():
+                if line.lower().startswith("needs you:"):
+                    needs = line.split(":", 1)[-1].strip()
+                    break
+            self._state["needs_you"] = needs[:300]
+
+    def set_needs_you(self, text: str) -> None:
+        with self._lock:
+            self._state["needs_you"] = (text or "")[:300]
 
     def set_pending_replan(self, message: str, steps: Optional[List[str]] = None) -> None:
         """Spice: second Approve required before continuing a suggested replan."""

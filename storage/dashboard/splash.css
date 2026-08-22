@@ -35,11 +35,11 @@ html, body {
 }
 
 .mark-wrap {
-  /* Scales with the VassalOps window; stays sharp via SVG */
-  width: min(62vmin, 520px);
-  height: min(62vmin, 520px);
-  max-width: 86vw;
-  max-height: 62vh;
+  /* Match the size from the splash you approved earlier */
+  width: min(52vmin, 420px);
+  height: min(52vmin, 420px);
+  max-width: 80vw;
+  max-height: 48vh;
   display: flex;
   align-items: center;
   justify-content: center;

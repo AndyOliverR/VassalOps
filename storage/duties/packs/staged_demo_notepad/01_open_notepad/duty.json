@@ -1,0 +1,17 @@
+{
+  "id": "staged_demo_notepad_01_open",
+  "name": "Staged demo: open Notepad",
+  "description": "Stage 1 — open Notepad via Win+R. Password-free. Approve gate follows.",
+  "tags": ["demo", "pack", "safe", "staged"],
+  "created_at": "2026-08-22T00:00:00",
+  "last_run": null,
+  "success_count": 0,
+  "steps": [
+    {"type": "hotkey", "keys": ["win", "r"], "delay": 0.0},
+    {"type": "wait", "seconds": 0.6, "delay": 0.5},
+    {"type": "type_text", "text": "notepad", "delay": 1.0},
+    {"type": "keystroke", "key": "enter", "delay": 1.8},
+    {"type": "wait", "seconds": 1.0, "delay": 2.2},
+    {"type": "focus_window", "title": "Notepad", "delay": 3.0}
+  ]
+}

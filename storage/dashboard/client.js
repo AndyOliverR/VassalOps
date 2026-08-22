@@ -14,6 +14,7 @@ const skipPlaylistBtn = document.getElementById('skipPlaylistBtn');
 const dutiesList = document.getElementById('dutiesList');
 const dutiesStatus = document.getElementById('dutiesStatus');
 const dutiesHint = document.getElementById('dutiesHint');
+const runProgressTitle = document.getElementById('runProgressTitle');
 
 let currentUsername = localStorage.getItem('vassal_user_name') || 'AnDY';
 let currentUserAvatarBase64 = localStorage.getItem('vassal_user_avatar_b64') || '';
@@ -414,6 +415,17 @@ async function refreshRunProgress() {
         if (runProgressSummary) {
             runProgressSummary.textContent = p.summary || '';
         }
+        const needsYouEl = document.getElementById('needsYouBrief');
+        if (needsYouEl) {
+            const ny = (p.needs_you || '').trim();
+            if (ny) {
+                needsYouEl.textContent = 'Needs you: ' + ny;
+                needsYouEl.classList.remove('hidden');
+            } else {
+                needsYouEl.textContent = '';
+                needsYouEl.classList.add('hidden');
+            }
+        }
         renderChecklist(p.checklist || []);
         const hasReplan = !!(p.pending_replan && p.pending_replan.message);
         if (confirmReplanBtn) {
@@ -422,7 +434,7 @@ async function refreshRunProgress() {
         }
         if (status === 'paused') {
             runProgressIcon.className = 'ui-icon ui-icon-alert';
-            runProgressTitle.textContent = hasReplan ? 'Replan — Approve to continue' : 'Paused — need you';
+            runProgressTitle.textContent = hasReplan ? 'Stage / replan — Approve to continue' : 'Paused — need you';
             stuckBox.classList.remove('hidden');
             stuckReason.textContent = p.stuck_reason || 'Automation is stuck.';
             let hint = p.stuck_hint || '';
@@ -508,7 +520,7 @@ window.addEventListener('load', async () => {
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const ms = reduced ? 700 : 1800;
+    const ms = reduced ? 1200 : 5000;
     setTimeout(async () => {
         const stage = document.getElementById('splashStage');
         if (stage) stage.classList.add('fade-out');

@@ -20,6 +20,7 @@ DESKTOP_TYPES = {
     "click_landmark",
     "focus_window",
     "run_duty",
+    "run_staged_pack",
     "run_playlist",
     "run_saved_macro",
     "learn_macro",
