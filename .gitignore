@@ -12,6 +12,7 @@ storage/*.json
 storage/launch.log
 storage/app_stdout.log
 storage/app_stderr.log
+storage/window_place.log
 storage/_dep_check.py
 .env
 .venv/
@@ -21,3 +22,8 @@ venv/
 src/ingestion/cache/
 storage/runs/*.md
 storage/sessions/*.json
+storage/auth/
+config.local.json
+storage/pending_update/
+storage/internal_data/local/*
+!storage/internal_data/local/.gitkeep

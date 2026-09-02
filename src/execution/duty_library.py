@@ -167,25 +167,56 @@ class VassalOpsDutyLibrary:
                 imported.append(duty_id)
             except Exception as exc:
                 return {"ok": False, "imported": imported, "error": str(exc)}
-        return {"ok": True, "imported": imported}
+
+        # ICM staged packs (folder + CONTEXT.md + duty.json per stage)
+        from src.execution.staged_pack import import_staged_packs
+
+        staged = import_staged_packs(self)
+        if not staged.get("ok"):
+            return {
+                "ok": False,
+                "imported": imported,
+                "imported_packs": staged.get("imported_packs") or [],
+                "error": staged.get("error") or "Staged pack import failed",
+            }
+        imported.extend(staged.get("imported_duties") or [])
+        return {
+            "ok": True,
+            "imported": imported,
+            "imported_packs": staged.get("imported_packs") or [],
+        }
 
 
 def extract_duty_name_from_command(user_input: str, keyword: str) -> str:
     """Pull a human duty name from phrases like 'teach morning email check'."""
+    name, _note = extract_teach_parts(user_input, keyword)
+    return name
+
+
+def extract_teach_parts(user_input: str, keyword: str = "teach") -> tuple:
+    """
+    Parse 'teach morning email: triage inbox' into (name, note).
+    Also used for 'run duty …' (note ignored).
+    """
     lowered = user_input.lower()
     idx = lowered.find(keyword)
     if idx < 0:
-        return "unnamed_duty"
+        return "unnamed_duty", ""
     remainder = user_input[idx + len(keyword):].strip(" ,.-")
     tokens = remainder.split()
     noise = {"please", "now", "duty", "for", "me"}
     while tokens and tokens[0].lower().strip(",.") in noise:
-        # keep "for me" as two tokens
         if tokens[0].lower() == "for" and len(tokens) > 1 and tokens[1].lower() == "me":
             tokens = tokens[2:]
             continue
         tokens = tokens[1:]
-    while tokens and tokens[-1].lower().strip(",.") in noise:
+    while tokens and tokens[-1].lower().strip(",.").rstrip("?") in noise:
         tokens = tokens[:-1]
     name = " ".join(tokens).strip()
-    return name or "unnamed_duty"
+    note = ""
+    for sep in (":", "—", " – ", " - "):
+        if sep in name:
+            left, _, right = name.partition(sep)
+            name, note = left.strip(), right.strip()
+            break
+    return (name or "unnamed_duty"), note

@@ -11,6 +11,7 @@ ALLOWED_ACTION_TYPES: Set[str] = {
     "learn_macro",
     "teach_duty",
     "run_duty",
+    "run_staged_pack",
     "run_playlist",
     "click_element",
     "type_text",
@@ -21,12 +22,14 @@ ALLOWED_ACTION_TYPES: Set[str] = {
     "click_landmark",
     "agent_loop",
     "search_memory",
+    "search_internal",
     "search_reflex",
     "list_duties",
     "list_dir",
     "read_file",
     "write_file",
     "run_unittest",
+    "read_internal_sheet",
 }
 
 
@@ -62,13 +65,16 @@ class VassalOpsActionFirewall:
             "run_saved_macro",
             "teach_duty",
             "run_duty",
+            "run_staged_pack",
             "focus_window",
             "click_landmark",
             "agent_loop",
             "search_memory",
+            "search_internal",
             "search_reflex",
             "read_file",
             "write_file",
+            "read_internal_sheet",
         ):
             if payload is None or (isinstance(payload, str) and not payload.strip() and action_type != "speak_log"):
                 return {"status": "REJECTED", "reason": f"Action '{action_type}' requires a non-empty payload."}

@@ -11,6 +11,7 @@ from src.ingestion.secret_redactor import redact_secrets
 
 
 SESSION_PATH = os.path.join("storage", "sessions", "last.json")
+LAST_DUTY_PATH = os.path.join("storage", "sessions", "last_duty.json")
 
 
 def save_last_session(
@@ -32,6 +33,37 @@ def save_last_session(
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
     return path.replace("\\", "/")
+
+
+def save_last_duty(
+    *,
+    duty_id: str,
+    name: str = "",
+    note: str = "",
+    path: str = LAST_DUTY_PATH,
+) -> str:
+    """Remember the last taught/run duty for 'again' / 'run last duty'."""
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    payload = {
+        "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "duty_id": redact_secrets((duty_id or "").strip()),
+        "name": redact_secrets((name or duty_id or "").strip()),
+        "note": redact_secrets((note or "").strip())[:240],
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    return path.replace("\\", "/")
+
+
+def load_last_duty(path: str = LAST_DUTY_PATH) -> Dict[str, Any]:
+    if not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
 
 
 def load_last_session(path: str = SESSION_PATH) -> Dict[str, Any]:

@@ -26,6 +26,8 @@ jobs:
           fi
 
       - name: Build release zip
+        env:
+          VASSALOPS_INSTALLS_PAT: ${{ secrets.VASSALOPS_INSTALLS_PAT }}
         run: |
           VER="$(tr -d '[:space:]' < VERSION)"
           STAGING="dist/staging"
@@ -38,6 +40,7 @@ jobs:
             --exclude='.venv' \
             --exclude='venv' \
             --exclude='dist' \
+            --exclude='config.local.json' \
             --exclude='storage/launch.log' \
             --exclude='storage/app_stdout.log' \
             --exclude='storage/app_stderr.log' \
@@ -46,6 +49,11 @@ jobs:
             --exclude='storage/splash_seen.json' \
             --exclude='storage/reflexes/*.json' \
             ./ "$STAGING/"
+          if [ -n "$VASSALOPS_INSTALLS_PAT" ]; then
+            python3 tools/inject_release_token.py dist/staging/config.local.json
+          else
+            echo "VASSALOPS_INSTALLS_PAT secret missing; zip will still build. Product updates work; learning-share stays skipped until the secret is set."
+          fi
           (
             cd "$STAGING"
             zip -r "../VassalOps-${VER}.zip" .

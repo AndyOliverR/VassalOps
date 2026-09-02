@@ -34,6 +34,11 @@ class TestActionFirewall(unittest.TestCase):
     def test_allows_agent_loop_and_memory(self):
         self.assertEqual(self.fw.verify_step({"type": "agent_loop", "payload": "summarize in notepad"})["status"], "VERIFIED")
         self.assertEqual(self.fw.verify_step({"type": "search_memory", "payload": "email"})["status"], "VERIFIED")
+        self.assertEqual(self.fw.verify_step({"type": "search_internal", "payload": "hotel Italy"})["status"], "VERIFIED")
+        self.assertEqual(
+            self.fw.verify_step({"type": "read_internal_sheet", "payload": '{"url":"https://docs.google.com/spreadsheets/d/x"}'})["status"],
+            "VERIFIED",
+        )
         self.assertEqual(self.fw.verify_step({"type": "list_duties", "payload": ""})["status"], "VERIFIED")
         self.assertEqual(self.fw.verify_step({"type": "agent_loop", "payload": ""})["status"], "REJECTED")
 

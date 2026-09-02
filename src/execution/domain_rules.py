@@ -13,7 +13,7 @@ from src.execution.agent_tools import LOOP_TOOL_NAMES
 
 WORKDAY_ENTITIES = ("Duty", "Playlist", "Window", "Risk")
 
-READ_TOOLS = frozenset({"list_duties", "search_memory", "speak_log", "run_backup"})
+READ_TOOLS = frozenset({"list_duties", "search_memory", "search_internal", "speak_log", "run_backup"})
 DESKTOP_TOOLS = frozenset({"run_duty", "focus_window", "type_text", "press_hotkey"})
 
 _SHELLISH = ("shell_", "cmd_", "powershell", "bash_", "os.system")

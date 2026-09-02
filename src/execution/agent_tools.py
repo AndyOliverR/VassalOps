@@ -20,6 +20,7 @@ TOOL_CATALOG: List[Dict[str, str]] = [
     {"name": "speak_log", "description": "Record a short status note for the user (no desktop action).", "payload": "message"},
     {"name": "run_backup", "description": "Run the local backup tool.", "payload": "empty"},
     {"name": "search_memory", "description": "Keyword-search duties, agent.md preferences, and recent audit rows.", "payload": "search query"},
+    {"name": "search_internal", "description": "Search local company catalog (Excel/Word/PDF/CSV) for booking availability and pricing. Payload = client requirement text.", "payload": "country dates accommodation request"},
     {"name": "search_reflex", "description": "Element X: search Duty Reflex memory from prior Approve successes.", "payload": "duty id or goal keywords"},
     {"name": "list_dir", "description": "List files under the VassalOps workspace (relative path only).", "payload": "relative dir (default .)"},
     {"name": "read_file", "description": "Read a text file under the VassalOps workspace (size-capped).", "payload": "relative file path"},
@@ -289,6 +290,12 @@ def execute_loop_tool(
                 ledger=ledger,
                 agent_md_path=agent_md_path,
             )
+            return {"ok": True, "observation": text}
+
+        if tool == "search_internal":
+            from src.execution.internal_catalog import format_catalog_answer
+
+            text = format_catalog_answer(str(arg))
             return {"ok": True, "observation": text}
 
         if tool == "search_reflex":

@@ -189,16 +189,18 @@ if (-not $ollamaPath) {
 Write-Step "Creating Desktop shortcut"
 $desktop = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktop "VassalOps.lnk"
+$vbs = Join-Path $Root "run_vassalops.vbs"
 $bat = Join-Path $Root "bootstrap_and_run.bat"
-# Always use the .bat — unsigned VassalOps.exe is a common AV false positive (K7/Defender).
-$target = $bat
+# Prefer VBS so no PowerShell/Python console appears behind the GUI.
+$target = if (Test-Path $vbs) { $vbs } else { $bat }
 $wsh = New-Object -ComObject WScript.Shell
 $sc = $wsh.CreateShortcut($shortcutPath)
 $sc.TargetPath = $target
 $sc.WorkingDirectory = $Root
 $sc.WindowStyle = 7
-$sc.Description = "VassalOps — local desktop agent (bootstrap_and_run.bat)"
-$icon = Join-Path $Root "storage\dashboard\vassal_icon.ico"
+$sc.Description = "VassalOps — local desktop agent (no console)"
+$icon = Join-Path $Root "storage\dashboard\vassalops_bare.ico"
+if (-not (Test-Path $icon)) { $icon = Join-Path $Root "storage\dashboard\vassal_icon.ico" }
 if (Test-Path $icon) { $sc.IconLocation = $icon }
 $sc.Save()
 Write-Host "Shortcut: $shortcutPath -> $target"

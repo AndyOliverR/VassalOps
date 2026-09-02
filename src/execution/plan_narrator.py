@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List
 
 
@@ -15,6 +16,7 @@ ACTION_LABELS = {
     "run_saved_macro": "Replay macro",
     "teach_duty": "Teach duty (record)",
     "run_duty": "Run duty",
+    "run_staged_pack": "Run staged pack (Approve between stages)",
     "run_playlist": "Run today's workday playlist",
     "run_backup": "Run backup tool",
     "sort_intel": "Sort intel folder",
@@ -23,7 +25,9 @@ ACTION_LABELS = {
     "click_landmark": "Click on-screen landmark",
     "agent_loop": "Run bounded agent loop",
     "search_memory": "Search duties / notes / audit",
+    "search_internal": "Search local company catalog",
     "list_duties": "List taught duties",
+    "read_internal_sheet": "Copy signed-in Google Sheet (Chrome/Edge)",
 }
 
 
@@ -36,6 +40,18 @@ def narrate_action_step(step: Dict[str, Any], index: int = 1) -> str:
         # Prefer the human message itself for speak_log
         short = payload_s if len(payload_s) <= 120 else payload_s[:117] + "..."
         return f"{index}. {short}"
+    if action == "read_internal_sheet":
+        url = ""
+        try:
+            meta = json.loads(payload_s) if payload_s.startswith("{") else {}
+            if isinstance(meta, dict):
+                url = str(meta.get("url") or "")
+        except json.JSONDecodeError:
+            url = payload_s
+        short = url if len(url) <= 80 else url[:77] + "..."
+        if short:
+            return f"{index}. {label}: {short}"
+        return f"{index}. {label}"
     if payload_s:
         return f"{index}. {label}: {payload_s}"
     return f"{index}. {label}"

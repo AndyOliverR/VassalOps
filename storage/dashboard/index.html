@@ -11,16 +11,109 @@
     <div id="splashOverlay" class="hidden" aria-hidden="true">
       <div class="splash-stage" id="splashStage">
         <div class="mark-wrap">
-          <img class="splash-icon" src="assets/vassal_knight.png" width="512" height="512" alt="VassalOps">
+          <img class="splash-icon" src="assets/vassal_knight.png?v=5" width="512" height="512" alt="VassalOps">
         </div>
         <div class="splash-title">VassalOps</div>
         <div class="splash-sub">Your PC's workday — taught by you, approved by you, run locally.</div>
       </div>
     </div>
 
+    <div id="authOverlay" class="auth-overlay hidden" aria-hidden="true">
+      <div class="auth-card">
+        <h2 id="authTitle">Unlock VassalOps</h2>
+        <p class="auth-disclose" id="authDisclose">
+          Your PIN stays on this PC. Email is used once so the VassalOps project knows who installed (optional cloud ping if configured).
+        </p>
+        <div id="authSignupPanel" class="auth-panel hidden">
+          <label>Email</label>
+          <input type="email" id="authEmail" autocomplete="email" placeholder="you@example.com">
+          <label>PIN (4–8 digits)</label>
+          <input type="password" id="authPinSignup" inputmode="numeric" maxlength="8" autocomplete="new-password">
+          <label>Confirm PIN</label>
+          <input type="password" id="authPinSignup2" inputmode="numeric" maxlength="8" autocomplete="new-password">
+          <label>Secret question</label>
+          <select id="authQuestionSelect"></select>
+          <input type="text" id="authQuestionCustom" class="hidden" placeholder="Type your secret question">
+          <label>Secret answer</label>
+          <input type="text" id="authAnswer" autocomplete="off">
+          <button type="button" class="approve-btn auth-primary" id="authSignupBtn">Create local account</button>
+        </div>
+        <div id="authUnlockPanel" class="auth-panel hidden">
+          <p class="auth-meta" id="authEmailMasked"></p>
+          <label>PIN</label>
+          <input type="password" id="authPinUnlock" inputmode="numeric" maxlength="8" autocomplete="current-password">
+          <button type="button" class="approve-btn auth-primary" id="authUnlockBtn">Unlock</button>
+          <button type="button" class="reject-btn auth-link" id="authForgotBtn">Forgot PIN?</button>
+        </div>
+        <div id="authResetPanel" class="auth-panel hidden">
+          <p class="auth-meta" id="authResetQuestion"></p>
+          <label>Secret answer</label>
+          <input type="text" id="authResetAnswer" autocomplete="off">
+          <label>New PIN (4–8 digits)</label>
+          <input type="password" id="authResetPin" inputmode="numeric" maxlength="8" autocomplete="new-password">
+          <label>Confirm new PIN</label>
+          <input type="password" id="authResetPin2" inputmode="numeric" maxlength="8" autocomplete="new-password">
+          <button type="button" class="approve-btn auth-primary" id="authResetBtn">Reset PIN</button>
+          <button type="button" class="reject-btn auth-link" id="authResetBackBtn">Back to unlock</button>
+        </div>
+        <p class="auth-error" id="authError" role="alert"></p>
+      </div>
+    </div>
+
     <div class="top-nav-bar">
+        <button type="button" class="duties-btn teach-btn" id="teachDutyBtn" title="Record what you do so VassalOps can replay it later">Teach / Learn</button>
+        <button type="button" class="duties-btn" id="runLastDutyBtn" title="Replay the last taught or run duty">Run last</button>
         <button class="duties-btn" id="toggleDutiesBtn" title="Daily Duties"><span class="ui-icon ui-icon-list" aria-hidden="true"></span>Daily Duties</button>
+        <button type="button" class="duties-btn heart-btn" id="sponsorBtn" title="Sponsor or tip via GitHub Sponsors">♥ Sponsor</button>
+        <button type="button" class="duties-btn" id="feedbackBtn" title="Send feedback that can shape the next release">Feedback</button>
+        <button type="button" class="duties-btn" id="starRepoBtn" title="Star VassalOps on GitHub">★ Star</button>
         <button class="settings-gear-btn" id="toggleSettingsBtn" title="Open Customization Settings"><span class="ui-icon ui-icon-gear" aria-hidden="true"></span>Settings</button>
+    </div>
+
+    <div id="feedbackOverlay" class="auth-overlay hidden" aria-hidden="true">
+      <div class="auth-card">
+        <h2>Feedback &amp; suggestions</h2>
+        <p class="auth-disclose">
+          Opens a GitHub Issue on VassalOps so maintainers can fix it in a future push.
+          An in-app rating is noted on that Issue — it does <strong>not</strong> auto-add a GitHub star.
+          Use <strong>★ Star</strong> if you want the repo star count to go up.
+        </p>
+        <div class="auth-panel">
+          <label>Experience (optional)</label>
+          <select id="feedbackRating">
+            <option value="">Skip</option>
+            <option value="5">5 — love it</option>
+            <option value="4">4 — good</option>
+            <option value="3">3 — okay</option>
+            <option value="2">2 — rough</option>
+            <option value="1">1 — broken</option>
+          </select>
+          <label>What should we improve?</label>
+          <textarea id="feedbackBody" rows="5" placeholder="When I… I expected… but instead…"></textarea>
+          <button type="button" class="approve-btn auth-primary" id="feedbackSubmitBtn">Open on GitHub</button>
+          <button type="button" class="reject-btn auth-link" id="feedbackCancelBtn">Cancel</button>
+        </div>
+        <p class="auth-error" id="feedbackError" role="alert"></p>
+      </div>
+    </div>
+
+    <div id="teachOverlay" class="auth-overlay hidden" aria-hidden="true">
+      <div class="auth-card">
+        <h2>Teach / Learn a task</h2>
+        <p class="auth-disclose">
+          Name what you are about to do. After you Approve, perform the task on your PC, then press <strong>Escape</strong> to stop recording.
+          VassalOps does not watch your PC in the background — only this teach session.
+        </p>
+        <div class="auth-panel">
+          <label>Task name</label>
+          <input type="text" id="teachNameInput" placeholder="e.g. morning email" autocomplete="off">
+          <label>Short note (optional)</label>
+          <input type="text" id="teachNoteInput" placeholder="e.g. open Outlook and triage inbox" autocomplete="off">
+          <button type="button" class="approve-btn auth-primary" id="teachStartBtn">Continue to Approve</button>
+          <button type="button" class="reject-btn auth-link" id="teachCancelBtn">Cancel</button>
+        </div>
+        <p class="auth-error" id="teachError" role="alert"></p>
+      </div>
     </div>
 
     <div class="duties-panel" id="dutiesPanel">
@@ -51,6 +144,12 @@
             <input type="file" id="settingBgWallpaper" accept="image/*">
             <button class="clear-bg-btn" id="clearBgBtn">Remove Wallpaper</button>
         </div>
+        <div class="settings-row auth-settings">
+            <label>Change PIN (requires current PIN)</label>
+            <input type="password" id="settingCurrentPin" inputmode="numeric" maxlength="8" placeholder="Current PIN" autocomplete="current-password">
+            <input type="password" id="settingNewPin" inputmode="numeric" maxlength="8" placeholder="New PIN" autocomplete="new-password">
+            <button type="button" class="clear-bg-btn" id="changePinBtn">Update PIN</button>
+        </div>
         <button class="close-settings-btn" id="closeSettingsBtn">Save Profile Settings</button>
     </div>
 
@@ -64,6 +163,7 @@
         </div>
         <div id="runProgressLabel" class="run-progress-label"></div>
         <div id="runProgressSummary" class="run-progress-summary"></div>
+        <div id="needsYouBrief" class="needs-you-brief hidden" aria-live="polite"></div>
         <ol id="runChecklist" class="run-checklist" aria-label="Run checklist"></ol>
         <div class="run-progress-bar"><div id="runProgressFill" class="run-progress-fill"></div></div>
         <div id="stuckBox" class="stuck-box hidden">
@@ -81,8 +181,8 @@
     <div id="chatStream"></div>
 
     <div class="controls-capsule">
-        <input type="text" id="userInputField" class="text-input" placeholder="Type your command..." autocomplete="off">
-        <button class="action-btn" id="micButton" title="Simulate Voice Input">🎙️</button>
+        <input type="text" id="userInputField" class="text-input" placeholder="Type or tap mic to speak…" autocomplete="off">
+        <button type="button" class="action-btn" id="micButton" title="Voice input (speech to chat)">🎙️</button>
         <button class="run-btn" id="runButton">Run</button>
     </div>
 

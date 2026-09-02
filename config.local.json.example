@@ -1,0 +1,14 @@
+{
+  "runtime_boundaries": {
+    "registration_github_repo": "AndyOliverR/vassalops-installs",
+    "registration_github_token": "PASTE_FINE_GRAINED_PAT_HERE",
+    "internal_data_path": "storage/internal_data",
+    "internal_data_extra_roots": [],
+    "internal_sheets": []
+  },
+  "handshake": {
+    "enabled": true,
+    "product_repo": "AndyOliverR/VassalOps",
+    "learn_repo": "AndyOliverR/vassalops-installs"
+  }
+}

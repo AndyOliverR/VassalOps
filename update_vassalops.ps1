@@ -2,7 +2,8 @@
 # Called from bootstrap_and_run.ps1. Skip with: $env:VASSALOPS_SKIP_UPDATE = "1"
 param(
     [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-    [string]$Repo = "AndyOliverR/VassalOps"
+    [string]$Repo = "AndyOliverR/VassalOps",
+    [switch]$Auto
 )
 
 $ErrorActionPreference = "Continue"
@@ -118,6 +119,11 @@ function Invoke-VassalOpsUpdate([string]$ZipUrl, [string]$NewVersion) {
     if (Test-Path $configPath) {
         Copy-Item $configPath (Join-Path $preserve "config.json") -Force
     }
+    $localConfigPath = Join-Path $Root "config.local.json"
+    $hadLocal = Test-Path $localConfigPath
+    if ($hadLocal) {
+        Copy-Item $localConfigPath (Join-Path $preserve "config.local.json") -Force
+    }
     $storageSrc = Join-Path $Root "storage"
     if (Test-Path $storageSrc) {
         Copy-Item $storageSrc (Join-Path $preserve "storage") -Recurse -Force
@@ -132,6 +138,7 @@ function Invoke-VassalOpsUpdate([string]$ZipUrl, [string]$NewVersion) {
             Copy-Item $_.FullName $dest -Recurse -Force
         } else {
             if ($_.Name -eq "config.json") { return }
+            if ($hadLocal -and $_.Name -eq "config.local.json") { return }
             Copy-Item $_.FullName $dest -Force
         }
     }
@@ -157,6 +164,14 @@ function Invoke-VassalOpsUpdate([string]$ZipUrl, [string]$NewVersion) {
 
     if (Test-Path (Join-Path $preserve "config.json")) {
         Copy-Item (Join-Path $preserve "config.json") $configPath -Force
+    }
+    if (Test-Path (Join-Path $preserve "config.local.json")) {
+        Copy-Item (Join-Path $preserve "config.local.json") $localConfigPath -Force
+    } elseif (-not (Test-Path $localConfigPath)) {
+        $srcLocal = Join-Path $src "config.local.json"
+        if (Test-Path $srcLocal) {
+            Copy-Item $srcLocal $localConfigPath -Force
+        }
     }
 
     # Ensure VERSION matches release even if zipball lag
@@ -196,7 +211,13 @@ if (-not (Test-IsNewerVersion $remoteVer $local)) {
 
 $notes = ""
 if ($release.body) { $notes = [string]$release.body }
-if (-not (Show-UpdatePrompt $local $remoteVer $notes)) {
+$shouldUpdate = $true
+if (-not $Auto) {
+    $shouldUpdate = Show-UpdatePrompt $local $remoteVer $notes
+} else {
+    Write-UpdateLog "Auto-applying update to $remoteVer"
+}
+if (-not $shouldUpdate) {
     Write-UpdateLog "User declined update to $remoteVer"
     return @{ Applied = $false; Skipped = $true }
 }

@@ -26,22 +26,6 @@ function Show-Error([string]$Message) {
 Write-Log "=== VassalOps bootstrap starting ==="
 Write-Log "Root: $Root"
 
-# Optional auto-update from GitHub Releases (prompted; duties + config preserved)
-$updateScript = Join-Path $Root "update_vassalops.ps1"
-if (Test-Path $updateScript) {
-    try {
-        $updateResult = & $updateScript -Root $Root
-        if ($updateResult -and $updateResult.Applied) {
-            Write-Log "Restarting bootstrap after update to $($updateResult.Version)..."
-            $env:VASSALOPS_SKIP_UPDATE = "1"
-            & $PSCommandPath
-            exit $LASTEXITCODE
-        }
-    } catch {
-        Write-Log "Update check error (continuing): $($_.Exception.Message)"
-    }
-}
-
 # Resolve Python
 $python = $null
 $pythonArgsPrefix = @()
@@ -95,6 +79,48 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 Write-Log "Python packages OK"
+
+# Launch handshake: apply any staged zip, pull a newer release, send skill shapes if covenant is done
+try {
+    $handshakeScript = Join-Path $Root "tools\handshake.py"
+    if (Test-Path $handshakeScript) {
+        Write-Log "Launch handshake (product update + learning share)..."
+        $env:PYTHONPATH = $Root
+        $hsOut = & $python @pythonArgsPrefix $handshakeScript --reason launch --apply 2>&1
+        $hsOut | ForEach-Object { Write-Log "handshake: $_" }
+        $hsJson = ($hsOut | Select-Object -Last 1 | Out-String).Trim()
+        if ($hsJson -match '"needs_restart":\s*true') {
+            Write-Log "Restarting bootstrap after applied product update..."
+            & $PSCommandPath
+            exit $LASTEXITCODE
+        }
+    } else {
+        $updateScript = Join-Path $Root "update_vassalops.ps1"
+        if (Test-Path $updateScript) {
+            $updateResult = & $updateScript -Root $Root -Auto
+            if ($updateResult -and $updateResult.Applied) {
+                Write-Log "Restarting bootstrap after update to $($updateResult.Version)..."
+                $env:VASSALOPS_SKIP_UPDATE = "1"
+                & $PSCommandPath
+                exit $LASTEXITCODE
+            }
+        }
+    }
+} catch {
+    Write-Log "Handshake/update error (continuing): $($_.Exception.Message)"
+}
+
+# One-shot install notepad (GitHub Issues) if local account not yet registered
+try {
+    $regScript = Join-Path $Root "tools\register_pending.py"
+    if (Test-Path $regScript) {
+        Write-Log "Checking pending install registration..."
+        $env:PYTHONPATH = $Root
+        & $python @pythonArgsPrefix $regScript 2>&1 | ForEach-Object { Write-Log "register: $_" }
+    }
+} catch {
+    Write-Log "Install registration skipped: $($_.Exception.Message)"
+}
 
 # Load config model
 $configPath = Join-Path $Root "config.json"
@@ -201,7 +227,26 @@ $stderrLog = Join-Path $StorageDir "app_stderr.log"
 $argList = @()
 $argList += $pythonArgsPrefix
 $argList += $appPath
-$proc = Start-Process -FilePath $python -ArgumentList $argList -WorkingDirectory $Root -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
-Write-Log "app.py started with PID $($proc.Id)"
+
+# Prefer pythonw / pyw: no console window, but do NOT use -WindowStyle Hidden —
+# that would also hide the VassalOps GUI (pywebview) the user needs to chat with.
+$guiPython = $null
+$leaf = [System.IO.Path]::GetFileNameWithoutExtension($python).ToLowerInvariant()
+if ($leaf -eq "python") {
+    $candidate = [System.IO.Path]::Combine([System.IO.Path]::GetDirectoryName($python), "pythonw.exe")
+    if (Test-Path $candidate) { $guiPython = $candidate }
+} elseif ($leaf -eq "py") {
+    $pyw = Get-Command pyw -ErrorAction SilentlyContinue
+    if ($pyw) { $guiPython = $pyw.Source }
+}
+if (-not $guiPython) {
+    $pythonwCmd = Get-Command pythonw -ErrorAction SilentlyContinue
+    if ($pythonwCmd) { $guiPython = $pythonwCmd.Source }
+}
+if (-not $guiPython) { $guiPython = $python }
+
+$proc = Start-Process -FilePath $guiPython -ArgumentList $argList -WorkingDirectory $Root `
+    -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+Write-Log "app.py started with PID $($proc.Id) via $guiPython (GUI visible, no console)"
 Write-Log "=== VassalOps bootstrap finished ==="
 exit 0

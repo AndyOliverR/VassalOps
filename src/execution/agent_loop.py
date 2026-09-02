@@ -29,8 +29,13 @@ SYSTEM_PROMPT = (
     "Return ONLY JSON with one of:\n"
     '{"action":"tool_call","name":"<tool>","payload":"<string>"}\n'
     '{"action":"final","payload":"<short message for the user>"}\n'
-    "Use one tool per turn. Prefer list_duties / search_memory / run_duty before guessing clicks. "
-    "Do not invent tool names. Use final only when the goal is met or you are blocked; if blocked, say so in final.\n"
+    "Use one tool per turn. Prefer list_duties / search_memory / search_internal / run_duty before guessing clicks. "
+    "For client booking, availability, or pricing against company files, call search_internal with the requirement text. "
+    "Do not invent inventory or prices. "
+    "Do not invent tool names. "
+    "As soon as the goal is achieved (for example a requested file is deleted or the duty finished), "
+    "immediately return action final with a short confirmation — do not keep exploring or calling more tools. "
+    "Use final when the goal is met or you are blocked; if blocked, say so in final.\n"
     f"{domain_prompt_block()}\n"
     f"{catalog_prompt_block()}"
 )

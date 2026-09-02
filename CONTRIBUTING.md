@@ -123,7 +123,7 @@ Do not claim CodeQL, GitHub Advanced Security, or Secure Fund participation unle
 1. Bump the `VERSION` file (semver, no `v` prefix)
 2. Merge to `main`, then tag matching that version: `git tag v0.1.0 && git push origin v0.1.0`
 3. `.github/workflows/release.yml` publishes `VassalOps-<VERSION>.zip` on the GitHub Release
-4. Launch-time `update_vassalops.ps1` offers that zip to users (never silent; preserves `storage/` + `config.json`)
+4. Launch-time `tools/handshake.py` (and `update_vassalops.ps1 -Auto` as fallback) applies a newer GitHub Release zip automatically, then a close handshake stages the next zip if the GUI still has files locked. Preserves `storage/`, `config.json`, and `config.local.json`. Set `VASSALOPS_SKIP_HANDSHAKE=1` to disable. Maintainers: set Actions secret `VASSALOPS_INSTALLS_PAT` so the published zip can post learnings without a per-PC token visit.
 
 ### PR expectations
 

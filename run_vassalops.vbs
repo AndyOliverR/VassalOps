@@ -1,8 +1,11 @@
-' VassalOps desktop helper: run bootstrap with a console so errors are visible.
+' VassalOps Desktop launcher — no console window.
+' Bootstrap errors use a MessageBox + storage\launch.log (see bootstrap_and_run.ps1).
+' For a visible debug console, double-click bootstrap_and_run.bat instead.
 Set WshShell = CreateObject("WScript.Shell")
 Set FSO = CreateObject("Scripting.FileSystemObject")
 scriptDir = FSO.GetParentFolderName(WScript.ScriptFullName)
-batPath = scriptDir & "\bootstrap_and_run.bat"
+ps1Path = scriptDir & "\bootstrap_and_run.ps1"
 WshShell.CurrentDirectory = scriptDir
-' Window style 1 = normal (visible) so lay users can see bootstrap progress/errors
-WshShell.Run """" & batPath & """", 1, False
+cmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & ps1Path & """"
+' 0 = hide the launcher window entirely
+WshShell.Run cmd, 0, False

@@ -1,3 +1,4 @@
+import json
 import unittest
 from src.execution.plan_narrator import narrate_proposed_actions, narrate_macro_steps
 from src.execution.run_controller import VassalOpsRunController
@@ -8,10 +9,12 @@ class TestPlanNarrator(unittest.TestCase):
         lines = narrate_proposed_actions([
             {"type": "teach_duty", "payload": "morning email"},
             {"type": "speak_log", "payload": "Ready after Approve."},
+            {"type": "read_internal_sheet", "payload": json.dumps({"url": "https://docs.google.com/spreadsheets/d/abc/edit", "query": "hotel"})},
         ])
-        self.assertEqual(len(lines), 2)
+        self.assertEqual(len(lines), 3)
         self.assertIn("morning email", lines[0])
         self.assertIn("Ready after Approve", lines[1])
+        self.assertIn("spreadsheets", lines[2])
 
     def test_narrate_macro(self):
         lines = narrate_macro_steps([

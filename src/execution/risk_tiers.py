@@ -9,6 +9,7 @@ READ_TYPES = {
     "speak_log",
     "list_duties",
     "search_memory",
+    "search_internal",
     "extract_intel",
 }
 
@@ -20,6 +21,7 @@ DESKTOP_TYPES = {
     "click_landmark",
     "focus_window",
     "run_duty",
+    "run_staged_pack",
     "run_playlist",
     "run_saved_macro",
     "learn_macro",
@@ -27,6 +29,7 @@ DESKTOP_TYPES = {
     "run_backup",
     "sort_intel",
     "agent_loop",
+    "read_internal_sheet",
 }
 
 

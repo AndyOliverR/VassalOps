@@ -9,7 +9,7 @@
 <body>
   <div class="splash-stage" id="splashStage">
     <div class="mark-wrap">
-      <img class="splash-icon" src="assets/vassal_knight.png" width="512" height="512" alt="VassalOps">
+      <img class="splash-icon" src="assets/vassal_knight.png?v=5" width="512" height="512" alt="VassalOps">
     </div>
     <div class="splash-title">VassalOps</div>
     <div class="splash-sub">Your PC's workday — taught by you, approved by you, run locally.</div>
@@ -17,7 +17,7 @@
   <script>
     (function () {
       var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var ms = reduced ? 700 : 1800;
+      var ms = reduced ? 1200 : 5000;
       setTimeout(function () {
         var stage = document.getElementById('splashStage');
         if (stage) stage.classList.add('fade-out');
