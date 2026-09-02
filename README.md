@@ -17,6 +17,10 @@ Brand mark and splash use the VassalOps **kneeling knight** (silver/steel + red,
 
 Data stays on your machine by default. Optional network features bind to **localhost** and require a shared token.
 
+**Local PIN gate:** After splash, first-run asks for an **email** + **PIN** + **secret question** (PIN/answer hashed on disk under `storage/auth/`). Each launch requires the PIN. Forgot PIN? Answer your secret question.
+
+**Handshake (automatic after PIN):** Release zips from GitHub include a scoped installs token (`config.local.json`, not in git). After the local account exists, launch and close send sanitized skill shapes to the private installs notepad and pull product updates. Git clones still need their own `config.local.json` — see [SECURITY.md](SECURITY.md). Sponsor / Star / Feedback stay optional in the top bar.
+
 ---
 
 ## What it is / is not
@@ -59,7 +63,7 @@ bootstrap_and_run.bat
 
 (or the Desktop shortcut)
 
-**Updates:** On launch, VassalOps checks [GitHub Releases](https://github.com/AndyOliverR/VassalOps/releases) and asks before applying. Duties, teach memory, and `config.json` are kept; dashboard + demo packs refresh. Set `VASSALOPS_SKIP_UPDATE=1` to disable. Maintainers: bump `VERSION`, commit, tag `vX.Y.Z` matching that file — CI publishes `VassalOps-X.Y.Z.zip`.
+**Updates:** On launch and close, VassalOps runs an automatic **handshake** (needs internet): it sends sanitized skill shapes (step types and lessons only — never documents, screens, keystrokes, or company inventory) and pulls a newer GitHub Release zip when one exists. Duties, teach memory, `config.json`, and `config.local.json` are kept; dashboard + demo packs refresh. Set `VASSALOPS_SKIP_HANDSHAKE=1` to disable both directions, or `VASSALOPS_SKIP_UPDATE=1` to skip product zips only. Maintainers: bump `VERSION`, commit, tag `vX.Y.Z` matching that file — CI publishes `VassalOps-X.Y.Z.zip` (injects `VASSALOPS_INSTALLS_PAT` into the zip as `config.local.json` when that Actions secret is set).
 
 Prefer the `.bat` path. Unsigned `VassalOps.exe` builds often trigger antivirus false positives — see [Antivirus false positives](#antivirus-false-positives-k7-windows-defender-etc). Do not use the old stub `VassalOpsLaunch.exe`.
 
@@ -74,6 +78,19 @@ Prefer the `.bat` path. Unsigned `VassalOps.exe` builds often trigger antivirus 
 5. Watch the progress panel (use **Stop** or **Continue** if it pauses)
 
 You should see Notepad open and type a short greeting. That is the 60-second demo. Alternate: `run duty demo calculator one plus one`. Full script and GIF capture notes: [docs/DEMO.md](docs/DEMO.md). Chat `resume` later to continue the last saved goal (Approve still required for desktop tools).
+
+**Internal catalog (availability / pricing)**
+
+Paste a client booking request in chat. VassalOps crawls company files on this PC (`storage/internal_data`, plus optional extra folders such as Google Drive for Desktop). Inventory never leaves the machine and is **not** included in the lab-rat handshake.
+
+Examples:
+
+- `Client needs a hotel in Italy 12–15 June, 2 nights`
+- `Check internal: villa in Spain 2026-09-10 to 2026-09-14, send pricing`
+
+Local CSV / Excel / Word / PDF / JSON answers return **immediately** (no Approve). Put live dumps in `storage/internal_data/local/` (gitignored). Sample rows: `storage/internal_data/sample_availability.csv`.
+
+To also read a **Google Sheet you are already signed into** in Chrome or Edge: paste a `docs.google.com/spreadsheets/...` link, or set `runtime_boundaries.internal_sheets` in `config.json` (URLs only, no Google API, no password capture). That path is **desktop** — review the plan, **Approve**, then VassalOps focuses the browser, opens the URL, and copies the grid (`Ctrl+A` `Ctrl+C`). If Chrome/Edge is missing, it pauses for Continue like other duties.
 
 **Train your real workday**
 
@@ -100,7 +117,7 @@ capture_context -> parse_intent -> [human Approve] -> agent loop (think/act/obse
 - **Autoresearch pattern (safe subset)** — Karpathy-style program / asset / score maps to human prefs + teach brief (`storage/agent.md`), duty JSON under `storage/duties/`, and locked scoring via `storage/runs/` evidence. Improve a duty only after Approve or re-teach — **not** unsupervised overnight desktop mutation (and not a vendored [autoresearch](https://github.com/karpathy/autoResearch) dependency)
 - **Workflow redesign (safe subset)** — Productivity comes from redesigning the PC workday (teach duties, Approve, replay), not sprinkling an LLM on the old click-path. Steering context lives in `storage/agent.md` and duty JSON; the duty is the workday spec, checked via Approve and `storage/runs/` evidence. This is the same “redesign the workflow, don’t add a copilot” idea as [AWS/Kiro productivity talks](https://www.youtube.com/watch?v=zy4nmItGsxY) — **not** Amazon Q, Kiro, or unattended cloud agent fleets
 - **Harness engineering (safe subset)** — VassalOps is the harness around local Ollama (allowlisted tools, `storage/agent.md` memory, bounded loops, firewall guardrails), but desktop actions still require **Approve**. Not unsupervised “run for months with no human” harnesses, and not Harness Claw–class personal assistants
-- **Tools (hands)** — allowlisted catalog: duties, focus_window, type_text, press_hotkey, backup, search_memory, Duty Reflex search, workspace `list_dir`/`read_file`/`write_file` (write Approve-gated), hermetic `run_unittest` — last gate is the action firewall
+- **Tools (hands)** — allowlisted catalog: duties, focus_window, type_text, press_hotkey, backup, search_memory, `search_internal` (local inventory files), Duty Reflex search, workspace `list_dir`/`read_file`/`write_file` (write Approve-gated), hermetic `run_unittest`, Approve-gated `read_internal_sheet` (signed-in Chrome/Edge clipboard) — last gate is the action firewall
 - **Element X — Duty Reflex** — successful Approve runs store window/landmark patterns under `storage/reflexes/`; later goals get that procedural memory injected (never skips Approve)
 - **Spice UI** — live run checklist, summary, **Needs you** brief, stuck Continue/Skip, and second Approve for suggested replans / **ICM stage gates**
 - **Working memory** — system/user/observation trail, capped OCR, compact window + playlist state each turn
@@ -191,7 +208,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). AI-assisted PRs are welcome when tests p
 
 - **Bugs & ideas:** [GitHub Issues](https://github.com/AndyOliverR/VassalOps/issues) (look for `good first issue`)
 - **Pull requests:** [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Sponsor:** GitHub Sponsors via [FUNDING.yml](.github/FUNDING.yml) (`AndyOliverR`) when enabled on the account
+- **Sponsor:** GitHub Sponsors via [FUNDING.yml](.github/FUNDING.yml) (`AndyOliverR`) when enabled on the account. In-app **♥ Sponsor** / **★ Star** / **Feedback** are optional. Stars only increase when the user clicks Star on GitHub (in-app ratings cannot set stars).
 
 Pitch for operators and funders: a **work-PC-safe** local agent with human Approve and teachable duties — compliance-friendlier than chat agents that run host tools unchecked.
 

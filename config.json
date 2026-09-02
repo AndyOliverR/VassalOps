@@ -10,6 +10,17 @@
         "rolling_history_limit": 6,
         "broker_bind_host": "127.0.0.1",
         "broker_port": 8765,
-        "broker_auth_token": "vo_local_7QmK9pL2xR4nT8vW1cY5hJ3"
+        "broker_auth_token": "vo_local_7QmK9pL2xR4nT8vW1cY5hJ3",
+        "registration_endpoint": "",
+        "registration_github_repo": "AndyOliverR/vassalops-installs",
+        "registration_github_token": "",
+        "internal_data_path": "storage/internal_data",
+        "internal_data_extra_roots": [],
+        "internal_sheets": []
+    },
+    "handshake": {
+        "enabled": true,
+        "product_repo": "AndyOliverR/VassalOps",
+        "learn_repo": "AndyOliverR/vassalops-installs"
     }
 }

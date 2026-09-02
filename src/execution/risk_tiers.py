@@ -9,6 +9,7 @@ READ_TYPES = {
     "speak_log",
     "list_duties",
     "search_memory",
+    "search_internal",
     "extract_intel",
 }
 
@@ -28,6 +29,7 @@ DESKTOP_TYPES = {
     "run_backup",
     "sort_intel",
     "agent_loop",
+    "read_internal_sheet",
 }
 
 

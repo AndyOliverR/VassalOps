@@ -5,6 +5,10 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+from src.execution.console_io import configure_utf8_stdio, safe_print
+
+configure_utf8_stdio()
+
 from src.ingestion.screen_capture import ScreenContextLayer
 from src.ingestion.ocr_reader import VassalOpsScreenOCRReader
 from src.execution.action_bridge import SystemOperatorBridge
@@ -21,7 +25,7 @@ from src.execution.macro_orchestrator import VassalOpsAutomationRouter
 from src.execution.action_firewall import VassalOpsActionFirewall
 from src.ingestion.secret_redactor import redact_secrets
 from src.execution.macro_recorder import VassalOpsMacroRecorder
-from src.execution.duty_library import VassalOpsDutyLibrary, extract_duty_name_from_command
+from src.execution.duty_library import VassalOpsDutyLibrary, extract_duty_name_from_command, extract_teach_parts
 from src.execution.daily_playlist import VassalOpsDailyPlaylist
 from src.execution.plan_narrator import narrate_proposed_actions
 from src.execution.run_controller import run_controller
@@ -34,8 +38,24 @@ from src.execution.structured_llm import PlannerPlan, call_ollama_json, complete
 from src.execution.risk_tiers import annotate_steps, risk_summary
 from src.execution.run_evidence import write_run_report
 from src.execution.local_learning import record_loop_outcome
-from src.execution.session_store import save_last_session, load_last_session, format_resume_context
+from src.execution.session_store import (
+    save_last_session,
+    load_last_session,
+    format_resume_context,
+    save_last_duty,
+    load_last_duty,
+)
+from src.execution.local_auth import local_auth, UNLOCK_REQUIRED, maybe_register_pending
+from src.execution.handshake import run_handshake
 import threading
+
+
+def _register_pending_bg() -> None:
+    """Best-effort one-shot install notepad ping (never blocks UI)."""
+    try:
+        maybe_register_pending()
+    except Exception:
+        pass
 
 pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.05
@@ -127,6 +147,26 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
         steps = [{"type": "speak_log", "payload": duty_library.format_duty_list()}]
         return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
 
+    from src.execution.internal_catalog import internal_query_plan
+
+    catalog_plan = internal_query_plan(state["raw_user_input"])
+    if catalog_plan:
+        if catalog_plan.get("kind") == "sheet":
+            steps = [
+                {"type": "read_internal_sheet", "payload": catalog_plan["payload"]},
+                {
+                    "type": "speak_log",
+                    "payload": (
+                        str(catalog_plan.get("preview") or "")[:1500]
+                        + "\n\nApprove to copy the signed-in Google Sheet in Chrome/Edge "
+                        "(address bar + Ctrl+A Ctrl+C). Inventory stays on this PC."
+                    ),
+                },
+            ]
+            return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+        steps = [{"type": "speak_log", "payload": catalog_plan.get("text") or ""}]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
     if "build my workday" in user_raw or "build workday" in user_raw:
         data = daily_playlist.build_workday_from_all_duties()
         names = [e.get("duty_id") for e in data.get("workday", [])]
@@ -150,13 +190,52 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
         return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
 
     if user_raw.startswith("teach ") or "teach duty" in user_raw or (user_raw.startswith("teach")):
-        duty_name = extract_duty_name_from_command(state["raw_user_input"], "teach")
+        duty_name, duty_note = extract_teach_parts(state["raw_user_input"], "teach")
+        teach_payload = f"{duty_name}\n{duty_note}" if duty_note else duty_name
+        note_bit = f" Note: {duty_note}." if duty_note else ""
         steps = [
-            {"type": "teach_duty", "payload": duty_name},
+            {"type": "teach_duty", "payload": teach_payload},
             {"type": "speak_log", "payload": (
-                f"Ready to TEACH duty '{duty_name}'. After Approve: perform the task, then press Escape. "
-                "WARNING: keystrokes (including passwords) will be recorded."
+                f"Ready to TEACH duty '{duty_name}'.{note_bit} After Approve: perform the task, then press Escape. "
+                "WARNING: keystrokes (including passwords) will be recorded. "
+                "Later say: run duty {0} — or again / run last duty.".format(duty_name)
             )},
+        ]
+        return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+
+    # Replay last taught/run duty (smarter day-to-day shortcut)
+    if user_raw.strip() in (
+        "again",
+        "do that again",
+        "do it again",
+        "run again",
+        "run that again",
+        "run last",
+        "run last duty",
+        "last duty",
+        "repeat last",
+        "repeat that",
+    ) or user_raw.startswith("run last duty"):
+        last = load_last_duty()
+        duty_id = (last.get("duty_id") or "").strip()
+        if not duty_id:
+            steps = [{
+                "type": "speak_log",
+                "payload": (
+                    "No last duty yet. Teach one first (teach morning email), Approve, do the task, Escape — "
+                    "then say again or run last duty."
+                ),
+            }]
+            return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
+        label = last.get("name") or duty_id
+        note = last.get("note") or ""
+        note_bit = f" ({note})" if note else ""
+        steps = [
+            {"type": "run_duty", "payload": duty_id},
+            {
+                "type": "speak_log",
+                "payload": f"Ready to run last duty '{label}'{note_bit} after you Approve.",
+            },
         ]
         return {"normalized_intent": {"steps": steps}, "proposed_actions": steps, "approval_status": "pending"}
 
@@ -296,7 +375,7 @@ def parse_intent_node(state: VassalOpsState) -> Dict:
     steps = [
         {"type": "agent_loop", "payload": state.get("raw_user_input") or ""},
         {"type": "speak_log", "payload": (
-            f"After Approve I will run a bounded agent loop (max 8 turns: think → tool → observe). "
+            f"After Approve I will run a bounded agent loop (max 8 turns: think -> tool -> observe). "
             f"Preview: {preview_text}"
         )},
     ]
@@ -424,11 +503,14 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
             print(f" [ToolRouter] {mcp_result['message']}")
         elif action_type == "agent_loop":
             report = run_approved_agent_loop(str(payload), ocr_text=state.get("captured_context") or "")
-            print(f" [AgentLoop] {report}")
+            safe_print(
+                f" [AgentLoop] ok={report.get('ok')} turns={report.get('turns')} "
+                f"reason={(report.get('reason') or '')[:120]}"
+            )
             if report.get("final"):
-                print(f"[VassalOps Output] {report['final']}")
+                safe_print(f"[VassalOps Output] {report['final']}")
             if report.get("report_path"):
-                print(f"[VassalOps Output] Report saved: {report['report_path']}")
+                safe_print(f"[VassalOps Output] Report saved: {report['report_path']}")
             if report.get("stopped") or run_controller.stop_requested():
                 break
         elif action_type == "sort_intel":
@@ -439,13 +521,27 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
             recorder.start_recording()
             print(f" [Macro] Recording started for {payload}")
         elif action_type == "teach_duty":
-            taught = duty_library.start_teach(str(payload))
+            raw_payload = str(payload)
+            if "\n" in raw_payload:
+                duty_name, duty_note = raw_payload.split("\n", 1)
+            else:
+                duty_name, duty_note = raw_payload, ""
+            taught = duty_library.start_teach(duty_name.strip(), description=duty_note.strip())
             daily_playlist.add_duty(taught["id"])
+            save_last_duty(
+                duty_id=str(taught.get("id") or ""),
+                name=str(taught.get("name") or duty_name),
+                note=str(taught.get("description") or duty_note or ""),
+            )
             print(f" [Duty] Taught and added to playlist: {taught['id']}")
         elif action_type == "run_duty":
             outcome = duty_library.run_duty(str(payload))
             print(f" [Duty] Run {payload}: {outcome}")
             if outcome.get("ok"):
+                save_last_duty(
+                    duty_id=str(outcome.get("duty_id") or payload),
+                    name=str(outcome.get("name") or payload),
+                )
                 try:
                     save_reflex(
                         duty_id=str(payload),
@@ -515,6 +611,22 @@ def execute_macros_node(state: VassalOpsState) -> Dict:
         elif action_type == "type_text": operator_bridge.execute_text_input(payload, press_enter=False)
         elif action_type == "press_key": pyautogui.press(payload)
         elif action_type == "press_hotkey": operator_bridge.execute_system_hotkey(payload)
+        elif action_type == "read_internal_sheet":
+            from src.execution.internal_catalog import answer_after_sheet, capture_signed_in_sheet
+
+            try:
+                meta = json.loads(payload) if str(payload).strip().startswith("{") else {"url": payload, "query": payload}
+            except json.JSONDecodeError:
+                meta = {"url": str(payload), "query": str(payload)}
+            cap = capture_signed_in_sheet(str(meta.get("url") or ""), run_controller=run_controller)
+            if cap.get("stop"):
+                break
+            if cap.get("ok"):
+                msg = answer_after_sheet(str(meta.get("query") or ""), cap.get("text") or "")
+            else:
+                msg = cap.get("error") or "Sheet capture failed."
+            run_controller.set_summary(msg[:400])
+            safe_print(f"[VassalOps Output] {msg}")
         elif action_type == "speak_log": print(f"[VassalOps Output] {payload}")
 
     return {}
@@ -529,6 +641,67 @@ workflow.add_edge("execute_macros", END)
 vassalops_engine = workflow.compile(checkpointer=memory)
 
 class VassalOpsAPI:
+    def _require_unlock(self) -> Optional[str]:
+        if local_auth.unlocked:
+            return None
+        return UNLOCK_REQUIRED
+
+    def auth_status(self) -> dict:
+        return local_auth.status()
+
+    def auth_signup(self, email: str, pin: str, question: str, answer: str) -> dict:
+        result = local_auth.signup(email, pin, question, answer)
+        if result.get("ok") and not result.get("registered"):
+            threading.Thread(target=_register_pending_bg, daemon=True).start()
+        return result
+
+    def auth_unlock(self, pin: str) -> dict:
+        result = local_auth.unlock(pin)
+        if result.get("ok"):
+            threading.Thread(target=_register_pending_bg, daemon=True).start()
+        return result
+
+    def auth_reset_pin(self, answer: str, new_pin: str) -> dict:
+        result = local_auth.reset_pin(answer, new_pin)
+        if result.get("ok"):
+            threading.Thread(target=_register_pending_bg, daemon=True).start()
+        return result
+
+    def auth_lock(self) -> dict:
+        local_auth.lock()
+        return local_auth.status()
+
+    def auth_change_pin(self, current_pin: str, new_pin: str) -> dict:
+        return local_auth.change_pin(current_pin, new_pin)
+
+    def auth_change_secret(self, pin: str, question: str, answer: str) -> dict:
+        return local_auth.change_secret(pin, question, answer)
+
+    def auth_complete_covenant(self, sponsored: bool, starred: bool, rating: str) -> dict:
+        return local_auth.complete_covenant(
+            sponsored=bool(sponsored),
+            starred=bool(starred),
+            rating=str(rating or ""),
+        )
+
+    def run_labrat_handshake(self, reason: str = "launch") -> dict:
+        """Bidirectional handshake: send sanitized skills, receive product updates."""
+        locked = self._require_unlock()
+        if locked:
+            return {"ok": False, "error": locked}
+        why = (reason or "launch").strip().lower()
+        if why not in ("launch", "close"):
+            why = "launch"
+        try:
+            return run_handshake(
+                reason=why,
+                apply_product=False,
+                stage_product=(why == "close"),
+                spawn_waiter=(why == "close"),
+            )
+        except Exception as exc:
+            return {"ok": False, "message": f"Handshake skipped: {exc}"}
+
     def get_system_identity(self) -> dict:
         """Dynamically tracks the OS login context and user details."""
         import getpass
@@ -537,6 +710,9 @@ class VassalOpsAPI:
 
     def submit_command(self, user_input: str) -> str:
         """Receives text from the HTML chat, routes it, and returns the response."""
+        locked = self._require_unlock()
+        if locked:
+            return locked
         blocked = enforce_intent_or_shutdown(user_input or "", source="chat")
         if blocked:
             return blocked
@@ -546,6 +722,12 @@ class VassalOpsAPI:
         # Instant read-only duty helpers (no bot-sitter needed)
         if "list duties" in cleaned or cleaned in ("duties", "show duties", "my duties"):
             return duty_library.format_duty_list()
+
+        from src.execution.internal_catalog import internal_query_plan
+
+        catalog_plan = internal_query_plan(user_input)
+        if catalog_plan and catalog_plan.get("kind") == "instant":
+            return catalog_plan.get("text") or ""
         if cleaned in ("resume", "resume last", "resume session", "continue last"):
             session = load_last_session()
             ctx = format_resume_context(session)
@@ -655,6 +837,9 @@ class VassalOpsAPI:
 
     def confirm_plan(self, approved: bool) -> str:
         """Bot-sitter gate: execute or discard the pending plan for the UI session."""
+        locked = self._require_unlock()
+        if locked:
+            return locked
         thread_id = "vassalops_default_session"
         config = {"configurable": {"thread_id": thread_id}}
         try:
@@ -687,13 +872,14 @@ class VassalOpsAPI:
 
             def _run():
                 try:
-                    print("[VassalOps] Plan approved by bot-sitter. Executing macros...")
+                    safe_print("[VassalOps] Plan approved by bot-sitter. Executing macros...")
                     execute_macros_node(current_state)
                     snap = run_controller.snapshot()
                     if snap.get("status") not in ("done", "stopped"):
                         run_controller.finish(True)
                 except Exception as exc:
-                    run_controller.finish(False, str(exc))
+                    if not run_controller.finish_if_active(False, str(exc)):
+                        safe_print(f"[VassalOps] Secondary error after run finished (ignored): {exc}")
 
             threading.Thread(target=_run, daemon=True).start()
             return "Execution started. Watch the progress panel — use Stop if needed. A redacted report will be saved under storage/runs/."
@@ -702,35 +888,56 @@ class VassalOpsAPI:
 
     def get_run_progress(self) -> dict:
         """Live progress for the dashboard progress panel."""
+        if not local_auth.unlocked:
+            return {"status": "idle", "ok": False, "summary": UNLOCK_REQUIRED}
         return run_controller.snapshot()
 
     def stop_run(self) -> str:
+        locked = self._require_unlock()
+        if locked:
+            return locked
         run_controller.request_stop()
         return "Stop requested. Automation will halt at the next safe point."
 
     def continue_run(self) -> str:
+        locked = self._require_unlock()
+        if locked:
+            return locked
         run_controller.continue_run()
         return "Continuing after pause."
 
     def skip_stuck_step(self) -> str:
+        locked = self._require_unlock()
+        if locked:
+            return locked
         run_controller.skip_stuck_step()
         return "Skipping the stuck step."
 
     def confirm_replan(self) -> str:
         """Second Approve for a mid-run / max-turn replan suggestion (never silent)."""
+        locked = self._require_unlock()
+        if locked:
+            return locked
         run_controller.confirm_replan()
         return "Replan approved. Continuing when the runner is waiting."
 
     def list_duties(self) -> list:
         """Returns taught duty summaries for the Daily Duties panel."""
+        if not local_auth.unlocked:
+            return []
         return duty_library.list_duties()
 
     def get_today_playlist(self) -> dict:
         """Morning briefing payload for the dashboard."""
+        if not local_auth.unlocked:
+            return {"items": [], "locked": True}
         return daily_playlist.get_today_playlist()
 
     def confirm_playlist(self, approved: bool, duty_ids: list = None) -> str:
         """Bot-sitter gate for running one or more playlist duties sequentially."""
+        locked = self._require_unlock()
+        if locked:
+            return locked
         if not approved:
             return "Playlist run cancelled. No duties were executed."
         ids = duty_ids if isinstance(duty_ids, list) else None
@@ -769,12 +976,13 @@ class VassalOpsAPI:
                     goal="playlist",
                 )
                 save_last_session(goal="playlist", observations=obs, final=err, ok=ok)
-                print(f"[VassalOps Output] Report saved: {path}")
+                safe_print(f"[VassalOps Output] Report saved: {path}")
                 snap = run_controller.snapshot()
                 if snap.get("status") not in ("done", "stopped"):
                     run_controller.finish(ok, err)
             except Exception as exc:
-                run_controller.finish(False, str(exc))
+                if not run_controller.finish_if_active(False, str(exc)):
+                    safe_print(f"[VassalOps] Secondary error after playlist finished (ignored): {exc}")
 
         readable = [f"Run duty: {d}" for d in selected]
         run_controller.reset_for_run(readable, phase="playlist")
@@ -783,10 +991,15 @@ class VassalOpsAPI:
 
     def add_duty_to_playlist(self, duty_id: str, after: str = "09:00") -> dict:
         """Adds/updates a duty on the workday playlist."""
+        if not local_auth.unlocked:
+            return {"error": UNLOCK_REQUIRED}
         daily_playlist.add_duty(duty_id, after=after)
         return daily_playlist.get_today_playlist()
 
     def import_demo_pack(self) -> str:
+        locked = self._require_unlock()
+        if locked:
+            return locked
         result = duty_library.import_demo_packs()
         if not result.get("ok"):
             return f"Import failed: {result.get('error')}"
@@ -809,6 +1022,40 @@ class VassalOpsAPI:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(payload, f)
         return payload
+
+    def open_external_url(self, url: str) -> str:
+        """Open sponsor / feedback / star links in the system browser."""
+        import webbrowser
+        from urllib.parse import urlparse
+
+        raw = (url or "").strip()
+        parsed = urlparse(raw)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            return "Blocked: only http(s) URLs allowed."
+        host = parsed.netloc.lower()
+        if not (host == "github.com" or host.endswith(".github.com")):
+            return f"Blocked host: {host}"
+        try:
+            webbrowser.open(raw)
+            return "opened"
+        except Exception as exc:
+            return f"Could not open browser: {exc}"
+
+    def get_community_links(self) -> dict:
+        """Stable URLs for in-app Feedback / Sponsor / Star buttons."""
+        version = "0.0.0"
+        try:
+            with open("VERSION", "r", encoding="utf-8") as f:
+                version = f.read().strip() or version
+        except Exception:
+            pass
+        return {
+            "repo": "https://github.com/AndyOliverR/VassalOps",
+            "star": "https://github.com/AndyOliverR/VassalOps",
+            "sponsors": "https://github.com/sponsors/AndyOliverR",
+            "feedback_new_issue": "https://github.com/AndyOliverR/VassalOps/issues/new?template=feedback.yml",
+            "version": version,
+        }
 
 def force_win32_window_icon():
     """Win32: title-bar icon + repeatedly force 60% centered placement on the real monitor."""
@@ -898,6 +1145,31 @@ if __name__ == "__main__":
 
     window.events.shown += _seat_center
     window.events.loaded += _seat_center
+
+    _close_handshake_done = {"done": False}
+
+    def _close_handshake(*_args, **_kwargs) -> None:
+        if _close_handshake_done["done"]:
+            return
+        _close_handshake_done["done"] = True
+        try:
+            run_handshake(
+                reason="close",
+                apply_product=False,
+                stage_product=True,
+                spawn_waiter=True,
+            )
+        except Exception:
+            pass
+
+    try:
+        window.events.closing += _close_handshake
+    except Exception:
+        pass
+    try:
+        window.events.closed += _close_handshake
+    except Exception:
+        pass
 
     threading.Thread(target=force_win32_window_icon, daemon=True).start()
     

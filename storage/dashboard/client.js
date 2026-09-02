@@ -41,6 +41,170 @@ toggleDutiesBtn.addEventListener('click', async () => {
 closeDutiesBtn.addEventListener('click', () => dutiesPanel.classList.remove('open'));
 refreshDutiesBtn.addEventListener('click', () => refreshDutiesPanel());
 
+const teachDutyBtn = document.getElementById('teachDutyBtn');
+const runLastDutyBtn = document.getElementById('runLastDutyBtn');
+const teachOverlay = document.getElementById('teachOverlay');
+const teachNameInput = document.getElementById('teachNameInput');
+const teachNoteInput = document.getElementById('teachNoteInput');
+const teachStartBtn = document.getElementById('teachStartBtn');
+const teachCancelBtn = document.getElementById('teachCancelBtn');
+const teachError = document.getElementById('teachError');
+
+function openTeachDialog() {
+    if (teachError) teachError.textContent = '';
+    if (teachNameInput) teachNameInput.value = '';
+    if (teachNoteInput) teachNoteInput.value = '';
+    if (teachOverlay) {
+        teachOverlay.classList.remove('hidden');
+        teachOverlay.setAttribute('aria-hidden', 'false');
+    }
+    if (teachNameInput) teachNameInput.focus();
+}
+
+function closeTeachDialog() {
+    if (teachOverlay) {
+        teachOverlay.classList.add('hidden');
+        teachOverlay.setAttribute('aria-hidden', 'true');
+    }
+}
+
+if (teachDutyBtn) {
+    teachDutyBtn.addEventListener('click', () => openTeachDialog());
+}
+
+if (teachCancelBtn) {
+    teachCancelBtn.addEventListener('click', closeTeachDialog);
+}
+
+if (teachStartBtn) {
+    teachStartBtn.addEventListener('click', async () => {
+        const name = ((teachNameInput && teachNameInput.value) || '').trim();
+        const note = ((teachNoteInput && teachNoteInput.value) || '').trim();
+        if (!name) {
+            if (teachError) teachError.textContent = 'Enter a task name (e.g. morning email).';
+            return;
+        }
+        const cmd = note ? ('teach ' + name + ': ' + note) : ('teach ' + name);
+        closeTeachDialog();
+        inputField.value = cmd;
+        await handleSend();
+    });
+}
+
+if (runLastDutyBtn) {
+    runLastDutyBtn.addEventListener('click', async () => {
+        inputField.value = 'run last duty';
+        await handleSend();
+    });
+}
+
+const feedbackBtn = document.getElementById('feedbackBtn');
+const sponsorBtn = document.getElementById('sponsorBtn');
+const starRepoBtn = document.getElementById('starRepoBtn');
+const feedbackOverlay = document.getElementById('feedbackOverlay');
+const feedbackRating = document.getElementById('feedbackRating');
+const feedbackBody = document.getElementById('feedbackBody');
+const feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
+const feedbackCancelBtn = document.getElementById('feedbackCancelBtn');
+const feedbackError = document.getElementById('feedbackError');
+
+async function openExternal(url) {
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.open_external_url) {
+        return await window.pywebview.api.open_external_url(url);
+    }
+    window.open(url, '_blank');
+    return 'opened';
+}
+
+async function communityLinks() {
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_community_links) {
+        try {
+            return await window.pywebview.api.get_community_links();
+        } catch (e) { /* fall through */ }
+    }
+    return {
+        repo: 'https://github.com/AndyOliverR/VassalOps',
+        star: 'https://github.com/AndyOliverR/VassalOps',
+        sponsors: 'https://github.com/sponsors/AndyOliverR',
+        feedback_new_issue: 'https://github.com/AndyOliverR/VassalOps/issues/new?template=feedback.yml',
+        version: ''
+    };
+}
+
+if (sponsorBtn) {
+    sponsorBtn.addEventListener('click', async () => {
+        const links = await communityLinks();
+        const result = await openExternal(links.sponsors);
+        if (result && result !== 'opened') {
+            appendMessage('VassalOps', result, false);
+        } else {
+            appendMessage('VassalOps', 'Opened GitHub Sponsors — thank you for considering a tip or sponsorship.', false);
+        }
+    });
+}
+
+if (starRepoBtn) {
+    starRepoBtn.addEventListener('click', async () => {
+        const links = await communityLinks();
+        await openExternal(links.star);
+        appendMessage('VassalOps', 'Opened the VassalOps repo. Click the ★ Star button on GitHub to add a star (apps cannot set stars for you).', false);
+    });
+}
+
+if (feedbackBtn) {
+    feedbackBtn.addEventListener('click', () => {
+        if (feedbackError) feedbackError.textContent = '';
+        if (feedbackBody) feedbackBody.value = '';
+        if (feedbackRating) feedbackRating.value = '';
+        if (feedbackOverlay) {
+            feedbackOverlay.classList.remove('hidden');
+            feedbackOverlay.setAttribute('aria-hidden', 'false');
+        }
+    });
+}
+
+if (feedbackCancelBtn) {
+    feedbackCancelBtn.addEventListener('click', () => {
+        if (feedbackOverlay) {
+            feedbackOverlay.classList.add('hidden');
+            feedbackOverlay.setAttribute('aria-hidden', 'true');
+        }
+    });
+}
+
+if (feedbackSubmitBtn) {
+    feedbackSubmitBtn.addEventListener('click', async () => {
+        const text = ((feedbackBody && feedbackBody.value) || '').trim();
+        if (!text) {
+            if (feedbackError) feedbackError.textContent = 'Please write a short suggestion first.';
+            return;
+        }
+        const links = await communityLinks();
+        const rating = (feedbackRating && feedbackRating.value) || '';
+        const ratingLine = rating ? ('Experience rating (in-app): ' + rating + '/5\n') : '';
+        const versionLine = links.version ? ('VassalOps version: ' + links.version + '\n') : '';
+        const body =
+            '### Feedback from VassalOps app\n\n' +
+            ratingLine +
+            versionLine +
+            '\n' +
+            text +
+            '\n\n---\nNote: In-app ratings do not automatically add GitHub stars.';
+        const title = '[Feedback]: ' + text.slice(0, 60).replace(/\n/g, ' ');
+        const url =
+            'https://github.com/AndyOliverR/VassalOps/issues/new?labels=feedback&title=' +
+            encodeURIComponent(title) +
+            '&body=' +
+            encodeURIComponent(body);
+        if (feedbackOverlay) {
+            feedbackOverlay.classList.add('hidden');
+            feedbackOverlay.setAttribute('aria-hidden', 'true');
+        }
+        await openExternal(url);
+        appendMessage('VassalOps', 'Opened a GitHub feedback Issue draft. Submit it while logged into GitHub so we can fix it in a future push.', false);
+    });
+}
+
 approvePlaylistBtn.addEventListener('click', async () => {
     if (playlistInFlight) return;
     playlistInFlight = true;
@@ -356,6 +520,67 @@ async function handleSend() {
 runButton.addEventListener('click', handleSend);
 inputField.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 
+/* Voice → chat (Web Speech API in WebView2). Desktop actions still need Approve. */
+const micButton = document.getElementById('micButton');
+let voiceRecognition = null;
+let voiceListening = false;
+
+function getSpeechRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    return SR ? new SR() : null;
+}
+
+if (micButton) {
+    micButton.addEventListener('click', () => {
+        if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+            appendMessage('VassalOps', 'Voice input is not available in this WebView. Type in the chat box instead.', false);
+            return;
+        }
+        if (voiceListening && voiceRecognition) {
+            try { voiceRecognition.stop(); } catch (e) { /* ignore */ }
+            return;
+        }
+        voiceRecognition = getSpeechRecognition();
+        if (!voiceRecognition) return;
+        voiceRecognition.lang = 'en-US';
+        voiceRecognition.interimResults = true;
+        voiceRecognition.continuous = false;
+        voiceListening = true;
+        micButton.classList.add('listening');
+        micButton.title = 'Listening… tap to stop';
+        voiceRecognition.onresult = (event) => {
+            let interim = '';
+            let finalText = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const piece = event.results[i][0].transcript;
+                if (event.results[i].isFinal) finalText += piece;
+                else interim += piece;
+            }
+            if (finalText) inputField.value = finalText.trim();
+            else if (interim) inputField.value = interim.trim();
+        };
+        voiceRecognition.onerror = () => {
+            voiceListening = false;
+            micButton.classList.remove('listening');
+            micButton.title = 'Voice input (speech to chat)';
+        };
+        voiceRecognition.onend = () => {
+            voiceListening = false;
+            micButton.classList.remove('listening');
+            micButton.title = 'Voice input (speech to chat)';
+            const text = (inputField.value || '').trim();
+            if (text) handleSend();
+        };
+        try {
+            voiceRecognition.start();
+        } catch (e) {
+            voiceListening = false;
+            micButton.classList.remove('listening');
+            appendMessage('VassalOps', 'Could not start microphone. Check Windows mic permission for VassalOps.', false);
+        }
+    });
+}
+
 const runProgressPanel = document.getElementById('runProgressPanel');
 const runProgressIcon = document.getElementById('runProgressIcon');
 const runProgressLabel = document.getElementById('runProgressLabel');
@@ -508,12 +733,17 @@ skipStuckBtn.addEventListener('click', async () => {
 window.addEventListener('load', async () => {
     const overlay = document.getElementById('splashOverlay');
     const finishWelcome = () => {
-        appendMessage('VassalOps', 'Hello! This is your PC workday runner.\n• Demo: import demo pack → run duty demo notepad hello (or demo calculator one plus one) → Approve\n• Real work: teach morning email → build my workday → Daily Duties → Approve today\'s run\nTaught by you, approved by you, run locally.', false);
+        appendMessage('VassalOps', 'Hello! This is your PC workday runner.\n• Teach / Learn (top bar): name a task → Approve → do it on the PC → Escape. Next time: Run last or say again.\n• Mic or type in chat — desktop still needs Approve.\n• Demo: import demo pack → run duty demo notepad hello\nIt does not silently record your whole day — only Teach sessions you start.', false);
+    };
+
+    const afterSplash = async () => {
+        const unlocked = await showAuthGate();
+        if (unlocked) finishWelcome();
     };
 
     // Brand splash every launch — large sharp mark (Desktop .ico stays static)
     if (!overlay) {
-        finishWelcome();
+        await afterSplash();
         return;
     }
 
@@ -532,7 +762,237 @@ window.addEventListener('load', async () => {
                     await window.pywebview.api.mark_splash_seen();
                 }
             } catch (e) { /* optional flag */ }
-            finishWelcome();
+            await afterSplash();
         }, 350);
     }, ms);
 });
+
+/* ---- Local PIN gate ---- */
+let authUnlocked = false;
+
+function setAuthError(msg) {
+    const el = document.getElementById('authError');
+    if (el) el.textContent = msg || '';
+}
+
+function showAuthPanel(name) {
+    ['authSignupPanel', 'authUnlockPanel', 'authResetPanel'].forEach((id) => {
+        const p = document.getElementById(id);
+        if (p) p.classList.toggle('hidden', id !== name);
+    });
+    const title = document.getElementById('authTitle');
+    if (title) {
+        title.textContent = name === 'authSignupPanel' ? 'Create local account'
+            : name === 'authResetPanel' ? 'Reset PIN'
+            : 'Unlock VassalOps';
+    }
+}
+
+function fillQuestionSelect(questions) {
+    const sel = document.getElementById('authQuestionSelect');
+    const custom = document.getElementById('authQuestionCustom');
+    if (!sel) return;
+    sel.innerHTML = '';
+    (questions || []).forEach((q) => {
+        const opt = document.createElement('option');
+        opt.value = q;
+        opt.textContent = q;
+        sel.appendChild(opt);
+    });
+    const syncCustom = () => {
+        const isCustom = sel.value === 'Custom…';
+        if (custom) custom.classList.toggle('hidden', !isCustom);
+    };
+    sel.onchange = syncCustom;
+    syncCustom();
+}
+
+function setMainUiEnabled(enabled) {
+    authUnlocked = !!enabled;
+    const authOverlay = document.getElementById('authOverlay');
+    if (authOverlay) {
+        authOverlay.classList.toggle('hidden', enabled);
+        authOverlay.setAttribute('aria-hidden', enabled ? 'true' : 'false');
+    }
+    if (inputField) inputField.disabled = !enabled;
+    if (runButton) runButton.disabled = !enabled;
+    if (micButton) micButton.disabled = !enabled;
+    if (teachDutyBtn) teachDutyBtn.disabled = !enabled;
+    if (runLastDutyBtn) runLastDutyBtn.disabled = !enabled;
+    if (feedbackBtn) feedbackBtn.disabled = !enabled;
+    if (sponsorBtn) sponsorBtn.disabled = !enabled;
+    if (starRepoBtn) starRepoBtn.disabled = !enabled;
+}
+
+async function showAuthGate() {
+    if (!(window.pywebview && window.pywebview.api && window.pywebview.api.auth_status)) {
+        setMainUiEnabled(true);
+        return true;
+    }
+    let status;
+    try {
+        status = await window.pywebview.api.auth_status();
+    } catch (e) {
+        setMainUiEnabled(true);
+        return true;
+    }
+    if (status && status.unlocked) {
+        setMainUiEnabled(true);
+        await runLaunchHandshake();
+        return true;
+    }
+    fillQuestionSelect(status.default_questions || []);
+    setMainUiEnabled(false);
+    setAuthError('');
+    if (status.has_profile) {
+        showAuthPanel('authUnlockPanel');
+        const masked = document.getElementById('authEmailMasked');
+        if (masked) masked.textContent = status.email_masked ? ('Account: ' + status.email_masked) : '';
+    } else {
+        showAuthPanel('authSignupPanel');
+    }
+    return new Promise((resolve) => {
+        window.__authGateResolve = resolve;
+    });
+}
+
+function finishAuthGate(ok) {
+    if (ok) setMainUiEnabled(true);
+    if (typeof window.__authGateResolve === 'function') {
+        window.__authGateResolve(!!ok);
+        window.__authGateResolve = null;
+    }
+}
+
+async function runLaunchHandshake() {
+    if (!(window.pywebview && window.pywebview.api && window.pywebview.api.run_labrat_handshake)) return;
+    try {
+        const result = await window.pywebview.api.run_labrat_handshake('launch');
+        if (result && result.message) {
+            appendMessage('VassalOps', result.message, false);
+        }
+    } catch (e) { /* offline is fine */ }
+}
+
+async function proceedAfterAuth() {
+    finishAuthGate(true);
+    await runLaunchHandshake();
+}
+
+const authSignupBtn = document.getElementById('authSignupBtn');
+if (authSignupBtn) {
+    authSignupBtn.addEventListener('click', async () => {
+        setAuthError('');
+        const email = (document.getElementById('authEmail') || {}).value || '';
+        const pin = (document.getElementById('authPinSignup') || {}).value || '';
+        const pin2 = (document.getElementById('authPinSignup2') || {}).value || '';
+        const sel = document.getElementById('authQuestionSelect');
+        const custom = document.getElementById('authQuestionCustom');
+        let question = sel ? sel.value : '';
+        if (question === 'Custom…') question = (custom && custom.value) || '';
+        const answer = (document.getElementById('authAnswer') || {}).value || '';
+        if (pin !== pin2) {
+            setAuthError('PIN confirmation does not match.');
+            return;
+        }
+        try {
+            const result = await window.pywebview.api.auth_signup(email, pin, question, answer);
+            if (!result || !result.ok) {
+                setAuthError((result && result.error) || 'Signup failed.');
+                return;
+            }
+            const note = result.registered
+                ? (result.registration || 'Registered.')
+                : ('Registered locally (cloud ping skipped). ' + (result.registration || ''));
+            appendMessage('VassalOps', note.trim(), false);
+            await proceedAfterAuth(result);
+        } catch (e) {
+            setAuthError(String(e));
+        }
+    });
+}
+
+const authUnlockBtn = document.getElementById('authUnlockBtn');
+if (authUnlockBtn) {
+    authUnlockBtn.addEventListener('click', async () => {
+        setAuthError('');
+        const pin = (document.getElementById('authPinUnlock') || {}).value || '';
+        try {
+            const result = await window.pywebview.api.auth_unlock(pin);
+            if (!result || !result.ok) {
+                setAuthError((result && result.error) || 'Unlock failed.');
+                return;
+            }
+            await proceedAfterAuth(result);
+        } catch (e) {
+            setAuthError(String(e));
+        }
+    });
+}
+
+const authForgotBtn = document.getElementById('authForgotBtn');
+if (authForgotBtn) {
+    authForgotBtn.addEventListener('click', async () => {
+        setAuthError('');
+        try {
+            const status = await window.pywebview.api.auth_status();
+            const qEl = document.getElementById('authResetQuestion');
+            if (qEl) qEl.textContent = 'Question: ' + (status.question || '(not set)');
+        } catch (e) { /* ignore */ }
+        showAuthPanel('authResetPanel');
+    });
+}
+
+const authResetBackBtn = document.getElementById('authResetBackBtn');
+if (authResetBackBtn) {
+    authResetBackBtn.addEventListener('click', () => {
+        setAuthError('');
+        showAuthPanel('authUnlockPanel');
+    });
+}
+
+const authResetBtn = document.getElementById('authResetBtn');
+if (authResetBtn) {
+    authResetBtn.addEventListener('click', async () => {
+        setAuthError('');
+        const answer = (document.getElementById('authResetAnswer') || {}).value || '';
+        const pin = (document.getElementById('authResetPin') || {}).value || '';
+        const pin2 = (document.getElementById('authResetPin2') || {}).value || '';
+        if (pin !== pin2) {
+            setAuthError('PIN confirmation does not match.');
+            return;
+        }
+        try {
+            const result = await window.pywebview.api.auth_reset_pin(answer, pin);
+            if (!result || !result.ok) {
+                setAuthError((result && result.error) || 'Reset failed.');
+                return;
+            }
+            appendMessage('VassalOps', result.message || 'PIN updated.', false);
+            await proceedAfterAuth(result);
+        } catch (e) {
+            setAuthError(String(e));
+        }
+    });
+}
+
+const changePinBtn = document.getElementById('changePinBtn');
+if (changePinBtn) {
+    changePinBtn.addEventListener('click', async () => {
+        if (!(window.pywebview && window.pywebview.api && window.pywebview.api.auth_change_pin)) return;
+        const cur = (document.getElementById('settingCurrentPin') || {}).value || '';
+        const neu = (document.getElementById('settingNewPin') || {}).value || '';
+        try {
+            const result = await window.pywebview.api.auth_change_pin(cur, neu);
+            appendMessage('VassalOps', (result && result.ok) ? (result.message || 'PIN changed.') : ((result && result.error) || 'PIN change failed.'), false);
+            if (result && result.ok) {
+                const a = document.getElementById('settingCurrentPin');
+                const b = document.getElementById('settingNewPin');
+                if (a) a.value = '';
+                if (b) b.value = '';
+            }
+        } catch (e) {
+            appendMessage('VassalOps', String(e), false);
+        }
+    });
+}

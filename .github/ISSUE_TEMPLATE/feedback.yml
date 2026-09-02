@@ -1,0 +1,34 @@
+name: Feedback or suggestion
+description: Tell us what to improve in VassalOps (feeds the next release)
+title: "[Feedback]: "
+labels: ["feedback"]
+body:
+  - type: dropdown
+    id: rating
+    attributes:
+      label: Experience rating
+      description: Optional. This does NOT automatically add a GitHub star — please Star the repo separately if you like VassalOps.
+      options:
+        - "5 — love it"
+        - "4 — good"
+        - "3 — okay"
+        - "2 — rough"
+        - "1 — broken"
+        - "Skip"
+    validations:
+      required: false
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What should we fix or add?
+      description: Concrete steps help us ship a fix in the next push.
+      placeholder: When I… I expected… but instead…
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: VassalOps version (from VERSION file if known)
+      placeholder: "0.1.7"
+    validations:
+      required: false

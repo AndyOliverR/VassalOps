@@ -22,3 +22,8 @@ venv/
 src/ingestion/cache/
 storage/runs/*.md
 storage/sessions/*.json
+storage/auth/
+config.local.json
+storage/pending_update/
+storage/internal_data/local/*
+!storage/internal_data/local/.gitkeep

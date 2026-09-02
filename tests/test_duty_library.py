@@ -1,8 +1,14 @@
 import os
 import tempfile
 import unittest
-from src.execution.duty_library import VassalOpsDutyLibrary, extract_duty_name_from_command, _slugify
+from src.execution.duty_library import (
+    VassalOpsDutyLibrary,
+    extract_duty_name_from_command,
+    extract_teach_parts,
+    _slugify,
+)
 from src.execution.daily_playlist import VassalOpsDailyPlaylist
+from src.execution.session_store import save_last_duty, load_last_duty
 
 
 class TestDutyLibrary(unittest.TestCase):
@@ -13,6 +19,18 @@ class TestDutyLibrary(unittest.TestCase):
     def test_slugify_and_extract(self):
         self.assertEqual(_slugify("Morning Email!"), "morning_email")
         self.assertEqual(extract_duty_name_from_command("teach morning email please", "teach"), "morning email")
+
+    def test_extract_teach_with_note(self):
+        name, note = extract_teach_parts("teach morning email: triage inbox", "teach")
+        self.assertEqual(name, "morning email")
+        self.assertEqual(note, "triage inbox")
+
+    def test_last_duty_roundtrip(self):
+        path = os.path.join(self.tmp, "last_duty.json")
+        save_last_duty(duty_id="morning_email", name="morning email", note="triage", path=path)
+        data = load_last_duty(path)
+        self.assertEqual(data["duty_id"], "morning_email")
+        self.assertEqual(data["note"], "triage")
 
     def test_list_empty(self):
         self.assertEqual(self.lib.list_duties(), [])

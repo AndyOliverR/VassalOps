@@ -206,6 +206,14 @@ class VassalOpsRunController:
                 if not self._state.get("summary"):
                     self._state["summary"] = error or "Run failed."
 
+    def finish_if_active(self, ok: bool, error: str = "") -> bool:
+        """Call finish only when the run is still in flight. Returns True if finish ran."""
+        with self._lock:
+            if self._state["status"] in ("done", "stopped"):
+                return False
+        self.finish(ok, error)
+        return True
+
 
 # Process-wide controller used by macros, duties, and the dashboard.
 run_controller = VassalOpsRunController()

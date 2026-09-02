@@ -1,0 +1,6 @@
+name,country,type,check_in,check_out,available,price
+Hotel Roma,Italy,hotel,2026-06-01,2026-09-30,4,EUR 120/night
+Lakeside Villa,Italy,villa,2026-06-01,2026-08-31,1,EUR 240/night
+Hotel Milano Full,Italy,hotel,2026-06-01,2026-09-30,0,EUR 99/night
+Casa Sol,Spain,villa,2026-09-01,2026-09-30,2,EUR 180/night
+Paris Studio,France,apartment,2026-05-01,2026-10-31,3,EUR 95/night

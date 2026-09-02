@@ -13,6 +13,8 @@ class TestRiskTiers(unittest.TestCase):
     def test_read_vs_desktop(self):
         self.assertEqual(tool_risk("list_duties"), "read")
         self.assertEqual(tool_risk("search_memory"), "read")
+        self.assertEqual(tool_risk("search_internal"), "read")
+        self.assertEqual(tool_risk("read_internal_sheet"), "desktop")
         self.assertEqual(tool_risk("type_text"), "desktop")
         self.assertEqual(tool_risk("agent_loop"), "desktop")
         summary = risk_summary([{"type": "speak_log", "payload": "hi"}, {"type": "run_duty", "payload": "x"}])

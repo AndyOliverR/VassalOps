@@ -26,22 +26,6 @@ function Show-Error([string]$Message) {
 Write-Log "=== VassalOps bootstrap starting ==="
 Write-Log "Root: $Root"
 
-# Optional auto-update from GitHub Releases (prompted; duties + config preserved)
-$updateScript = Join-Path $Root "update_vassalops.ps1"
-if (Test-Path $updateScript) {
-    try {
-        $updateResult = & $updateScript -Root $Root
-        if ($updateResult -and $updateResult.Applied) {
-            Write-Log "Restarting bootstrap after update to $($updateResult.Version)..."
-            $env:VASSALOPS_SKIP_UPDATE = "1"
-            & $PSCommandPath
-            exit $LASTEXITCODE
-        }
-    } catch {
-        Write-Log "Update check error (continuing): $($_.Exception.Message)"
-    }
-}
-
 # Resolve Python
 $python = $null
 $pythonArgsPrefix = @()
@@ -95,6 +79,48 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 Write-Log "Python packages OK"
+
+# Launch handshake: apply any staged zip, pull a newer release, send skill shapes if covenant is done
+try {
+    $handshakeScript = Join-Path $Root "tools\handshake.py"
+    if (Test-Path $handshakeScript) {
+        Write-Log "Launch handshake (product update + learning share)..."
+        $env:PYTHONPATH = $Root
+        $hsOut = & $python @pythonArgsPrefix $handshakeScript --reason launch --apply 2>&1
+        $hsOut | ForEach-Object { Write-Log "handshake: $_" }
+        $hsJson = ($hsOut | Select-Object -Last 1 | Out-String).Trim()
+        if ($hsJson -match '"needs_restart":\s*true') {
+            Write-Log "Restarting bootstrap after applied product update..."
+            & $PSCommandPath
+            exit $LASTEXITCODE
+        }
+    } else {
+        $updateScript = Join-Path $Root "update_vassalops.ps1"
+        if (Test-Path $updateScript) {
+            $updateResult = & $updateScript -Root $Root -Auto
+            if ($updateResult -and $updateResult.Applied) {
+                Write-Log "Restarting bootstrap after update to $($updateResult.Version)..."
+                $env:VASSALOPS_SKIP_UPDATE = "1"
+                & $PSCommandPath
+                exit $LASTEXITCODE
+            }
+        }
+    }
+} catch {
+    Write-Log "Handshake/update error (continuing): $($_.Exception.Message)"
+}
+
+# One-shot install notepad (GitHub Issues) if local account not yet registered
+try {
+    $regScript = Join-Path $Root "tools\register_pending.py"
+    if (Test-Path $regScript) {
+        Write-Log "Checking pending install registration..."
+        $env:PYTHONPATH = $Root
+        & $python @pythonArgsPrefix $regScript 2>&1 | ForEach-Object { Write-Log "register: $_" }
+    }
+} catch {
+    Write-Log "Install registration skipped: $($_.Exception.Message)"
+}
 
 # Load config model
 $configPath = Join-Path $Root "config.json"
